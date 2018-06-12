@@ -3,6 +3,7 @@ from preprocessing import TraceStats
 from itertools import product
 import pandas as pd
 import matplotlib.pyplot as plt
+from time import perf_counter
 
 data_path = './../data/'
 output_path = '/home/ynezri/TexStudio/incremental/img/'
@@ -50,6 +51,84 @@ class Cumulative(ErrorMetric):
     @staticmethod
     def error(truth, estimation):
         return sum(np.abs(truth - estimation))
+
+#######################################################################################################################
+# Time Analysis
+#######################################################################################################################
+
+
+def time_estimate(ts, estimators):
+
+    time_d = {}
+
+    for estimator in estimators:
+        total_time = 0
+        max_time = -float('Inf')
+        min_time = float('Inf')
+
+        for bs in ts.batch_list:
+            start = perf_counter()
+            estimator.estimate(bs)
+            end = perf_counter()
+
+            max_time = max(max_time, end-start)
+            min_time = min(min_time, end-start)
+            total_time += (end - start)
+
+        time_d[estimator.name] = [total_time / len(ts.batch_list), max_time, min_time]
+
+    return pd.DataFrame.from_dict(time_d, orient='index', columns=['avg_time', 'max_time', 'min_time'])
+
+
+def time_fit(ts, estimators, feature_names):
+
+    time_d = {}
+
+    for estimator in estimators:
+        total_time = 0
+        max_time = -float('Inf')
+        min_time = float('Inf')
+
+        estimator.estimate(ts.batch_list[0])
+        for bs in ts.batch_list:
+            features = bs.get_features(feature_names)
+
+            start = perf_counter()
+            estimator.model.partial_fit(features, [bs.batch_card])
+            end = perf_counter()
+
+            max_time = max(max_time, end-start)
+            min_time = min(min_time, end-start)
+            total_time += (end - start)
+
+        time_d[estimator.name] = [total_time / len(ts.batch_list), max_time, min_time]
+
+    return pd.DataFrame.from_dict(time_d, orient='index', columns=['avg_time', 'max_time', 'min_time'])
+
+
+def time_predict(ts, estimators, feature_names):
+
+    time_d = {}
+    for estimator in estimators:
+        total_time = 0
+        max_time = -float('Inf')
+        min_time = float('Inf')
+
+        for bs in ts.batch_list:
+            features = bs.get_features(feature_names)
+            estimator.model.partial_fit(features, [bs.batch_card])
+
+            start = perf_counter()
+            estimator.model.predict(features)
+            end = perf_counter()
+
+            max_time = max(max_time, end-start)
+            min_time = min(min_time, end-start)
+            total_time += (end - start)
+
+        time_d[estimator.name] = [total_time / len(ts.batch_list), max_time, min_time]
+
+    return pd.DataFrame.from_dict(time_d, orient='index', columns=['avg_time', 'max_time', 'min_time'])
 
 #######################################################################################################################
 # Evaluation Section Graphs

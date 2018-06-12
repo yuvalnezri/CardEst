@@ -216,12 +216,11 @@ class SGDRegressor(Regressor):
 
         d_loss = self._d_squared_loss(X, y)
 
-        '''
         if d_loss < -self.MAX_DLOSS:
             d_loss = -self.MAX_DLOSS
         elif d_loss > self.MAX_DLOSS:
             d_loss = self.MAX_DLOSS
-        '''
+
         grad = d_loss * X
         self.w -= self.learning_rate * grad
 

@@ -4,6 +4,7 @@ from itertools import product
 import pandas as pd
 import matplotlib.pyplot as plt
 from time import perf_counter
+import pylatex as pl
 
 data_path = './../data/'
 output_path = '/home/ynezri/TexStudio/incremental/img/'
@@ -46,95 +47,143 @@ class MAPE(ErrorMetric):
 
 
 class Cumulative(ErrorMetric):
-    name = 'Cumulative'
+    name = 'CE'
 
     @staticmethod
     def error(truth, estimation):
         return sum(np.abs(truth - estimation))
+
+
+class MAE(ErrorMetric):
+    name = 'MAE'
+
+    @staticmethod
+    def error(truth, estimation):
+        return np.mean(np.abs(truth - estimation))
+
+
+class MAXAE(ErrorMetric):
+    name = 'MAXAE'
+
+    @staticmethod
+    def error(truth, estimation):
+        return max(np.abs(truth - estimation))
+
 
 #######################################################################################################################
 # Time Analysis
 #######################################################################################################################
 
 
-def time_estimate(ts, estimators):
+def time_estimate(tss, estimators):
 
     time_d = {}
+    counter = 0
 
-    for estimator in estimators:
-        total_time = 0
-        max_time = -float('Inf')
-        min_time = float('Inf')
+    for ts in tss:
+        time_d[counter] = [ts.batch_list[0].sample_size]
+        for estimator in estimators:
+            total_time = 0
+            for bs in ts.batch_list:
 
-        for bs in ts.batch_list:
-            start = perf_counter()
-            estimator.estimate(bs)
-            end = perf_counter()
+                start = perf_counter()
+                estimator.estimate(bs)
+                end = perf_counter()
 
-            max_time = max(max_time, end-start)
-            min_time = min(min_time, end-start)
-            total_time += (end - start)
+                total_time += end - start
+            time_d[counter].append(total_time/ts.batch_count)
+        counter += 1
+    estimator_names = [estimator.name for estimator in estimators]
+    df = pd.DataFrame.from_dict(time_d, orient='index',
+                                columns=['Mean Sample Size'] + estimator_names)
 
-        time_d[estimator.name] = [total_time / len(ts.batch_list), max_time, min_time]
-
-    return pd.DataFrame.from_dict(time_d, orient='index', columns=['avg_time', 'max_time', 'min_time'])
-
-
-def time_fit(ts, estimators, feature_names):
-
-    time_d = {}
-
-    for estimator in estimators:
-        total_time = 0
-        max_time = -float('Inf')
-        min_time = float('Inf')
-
-        estimator.estimate(ts.batch_list[0])
-        for bs in ts.batch_list:
-            features = bs.get_features(feature_names)
-
-            start = perf_counter()
-            estimator.model.partial_fit(features, [bs.batch_card])
-            end = perf_counter()
-
-            max_time = max(max_time, end-start)
-            min_time = min(min_time, end-start)
-            total_time += (end - start)
-
-        time_d[estimator.name] = [total_time / len(ts.batch_list), max_time, min_time]
-
-    return pd.DataFrame.from_dict(time_d, orient='index', columns=['avg_time', 'max_time', 'min_time'])
+    # format times
+    df[estimator_names] = df[estimator_names].applymap('{:,.2e}'.format)
+    return df
 
 
-def time_predict(ts, estimators, feature_names):
+def time_fit(tss, estimators, estimator_names, feature_names):
 
     time_d = {}
-    for estimator in estimators:
-        total_time = 0
-        max_time = -float('Inf')
-        min_time = float('Inf')
+    counter = 0
 
-        for bs in ts.batch_list:
-            features = bs.get_features(feature_names)
-            estimator.model.partial_fit(features, [bs.batch_card])
+    for ts in tss:
+        inited_estimators = []
+        for i in range(len(estimators)):
+            estimator_class = estimators[i]
+            estimator_name = estimator_names[i]
+            inited_estimators.append(estimator_class(estimator_name, feature_names, 1))
 
-            start = perf_counter()
-            estimator.model.predict(features)
-            end = perf_counter()
+        time_d[counter] = [ts.batch_list[0].sample_size]
 
-            max_time = max(max_time, end-start)
-            min_time = min(min_time, end-start)
-            total_time += (end - start)
+        for estimator in inited_estimators:
+            estimator.estimate(ts.batch_list[0])
+            total_time = 0
 
-        time_d[estimator.name] = [total_time / len(ts.batch_list), max_time, min_time]
+            for bs in ts.batch_list:
 
-    return pd.DataFrame.from_dict(time_d, orient='index', columns=['avg_time', 'max_time', 'min_time'])
+                features = bs.get_features(feature_names)
+
+                start = perf_counter()
+                estimator.model.partial_fit(features, [bs.batch_card])
+                end = perf_counter()
+
+                total_time += end-start
+            time_d[counter].append(total_time/ts.batch_count)
+        counter += 1
+
+    df = pd.DataFrame.from_dict(time_d, orient='index',
+                                columns=['Mean Sample Size'] + estimator_names)
+
+    # format times
+    df[estimator_names] = df[estimator_names].applymap('{:,.2e}'.format)
+    return df
+
+
+def time_predict(tss, estimators, estimator_names, feature_names):
+    time_d = {}
+    counter = 0
+
+    for ts in tss:
+        inited_estimators = []
+        for i in range(len(estimators)):
+            estimator_class = estimators[i]
+            estimator_name = estimator_names[i]
+            inited_estimators.append(estimator_class(estimator_name, feature_names, 1))
+
+        time_d[counter] = [ts.batch_list[0].sample_size]
+
+        for estimator in inited_estimators:
+            estimator.estimate(ts.batch_list[0])
+            total_time = 0
+
+            for bs in ts.batch_list:
+                features = bs.get_features(feature_names)
+
+                start = perf_counter()
+                estimator.model.predict(features)
+                end = perf_counter()
+
+                total_time += end - start
+
+                # we don't want to predict over an untrained estimator
+                estimator.model.partial_fit(features, [bs.batch_card])
+
+            time_d[counter].append(total_time / ts.batch_count)
+        counter += 1
+
+    df = pd.DataFrame.from_dict(time_d, orient='index',
+                                columns=['Mean Sample Size'] + estimator_names)
+
+    # format times
+    df[estimator_names] = df[estimator_names].applymap('{:,.2e}'.format)
+    return df
 
 #######################################################################################################################
 # Evaluation Section Graphs
 #######################################################################################################################
 
-error_metrics = [RMSE, MAPE, Cumulative]
+error_metrics = [RMSE, MAE, MAPE, MAXAE]
 
 
 def plot_card(trace, sampling_rate, partitions, ylim, xlabel='Batch Index'):
@@ -228,8 +277,10 @@ def plot_features(trace, sampling_rate, training_rate, partition, feature_sets, 
     df.columns = map(str, feature_sets)
     df.plot(kind='bar')
     plt.ylabel(error.name, fontsize=15)
-    plt.xticks(fontsize=15, rotation=25)
-    lgd = plt.legend(title='Feature Set', bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+    plt.xticks(fontsize=15, rotation=0)
+    labels = ['{' + ', '.join(feature_set) + '}' for feature_set in feature_sets]
+    labels = [label.replace('f_', 'f') for label in labels]
+    lgd = plt.legend(title='Feature Set', labels=labels, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
     plt.savefig(output_path + '%s_features.png' % trace, bbox_extra_artists=(lgd,),
                 bbox_inches='tight')
     return df
@@ -263,9 +314,41 @@ def plot_tradeoff(trace, effective_sampling_rate, sampling_rates, partitions, fe
     df.columns = map(str, sampling_rates)
     df.plot(kind='bar')
     plt.ylabel(error.name, fontsize=15)
-    plt.xticks(fontsize=15, rotation=25)
+    locs, _ = plt.xticks()
+    ticks = [partition.replace('1S', '1 second').replace('S', ' seconds') for partition in partitions]
+    plt.xticks(locs, ticks, fontsize=15, rotation=0)
     lgd = plt.legend(labels=labels, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.,
                      title='sampling_rate / training_rate')
     plt.savefig(output_path + '%s_tradeoff.png' % trace, bbox_extra_artists=(lgd,),
                 bbox_inches='tight')
     return df
+
+
+#######################################################################################################################
+# Dataframe to PDF
+#######################################################################################################################
+
+def df_to_pdf(df, out_file, print_index=True, debug=False, digit_round=1, caption=None, comma_separated_columns=[]):
+
+    if digit_round is not None:
+        df = df.round(digit_round)
+
+    for column in comma_separated_columns:
+        df[column] = df[column].map('{:,}'.format)
+
+    doc = pl.Document(documentclass='standalone', document_options='varwidth')
+    doc.packages.append(pl.Package('booktabs'))
+
+    table_columns = len(df.columns)+1 if print_index else len(df.columns)
+
+    with doc.create(pl.MiniPage()):
+        with doc.create(pl.Table(position='htbp')) as table:
+            table.append(pl.Command('centering'))
+            table.append(pl.NoEscape(df.to_latex(escape=False, index=print_index,
+                                                 column_format='c'*table_columns)))
+            if caption is not None:
+                table.add_caption(caption)
+    if debug:
+        return doc.dumps()
+
+    doc.generate_pdf(output_path + out_file)

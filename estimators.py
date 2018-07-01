@@ -48,7 +48,7 @@ class GEE(Estimator):
 
     def estimate(self, batch_stats):
         freq1 = batch_stats.histogram[1]
-        return np.sqrt(1 / batch_stats.sampling_rate) * freq1 + (sum(batch_stats.histogram.values()))
+        return np.sqrt(1 / batch_stats.sampling_rate) * freq1 + (sum(batch_stats.histogram.values()) - freq1)
 
 
 class AE(Estimator):
@@ -201,14 +201,14 @@ class SGDRegressor(Regressor):
     def _squared_loss(self, X, y):
 
         if self.w is None:
-            raise RuntimeError('theta not inited')
+            raise RuntimeError('w not inited')
 
         return 0.5 * (np.dot(self.w, X) - y) * (np.dot(self.w, X) - y)
 
     def _d_squared_loss(self, X, y):
 
         if self.w is None:
-            raise RuntimeError('theta not inited')
+            raise RuntimeError('w not inited')
 
         return np.dot(self.w, X) - y
 
@@ -279,6 +279,46 @@ class RLSRegressor(Regressor):
         self.R = 1 / self.mu * (self.R - R1 / R2)
         dw = np.dot(self.R, X.T) * error
         self.w += dw
+
+
+class ADAMRegressor(Regressor):
+    def __init__(self, alpha=0.001, beta1=0.9, beta2=0.999, epsilon=10**-8, **kwargs):
+        super().__init__(loss=self._squared_loss, d_loss=self._d_squared_loss, **kwargs)
+        self.alpha = alpha
+        self.beta1 = beta1
+        self.beta2 = beta2
+        self.epsilon = epsilon
+        self.t = -1
+        self.m_t = None
+        self.v_t = None
+
+    def _squared_loss(self, x, y):
+
+        if self.w is None:
+            raise RuntimeError('w not inited')
+
+        return 0.5 * (np.dot(self.w, x) - y) * (np.dot(self.w, x) - y)
+
+    def _d_squared_loss(self, x, y):
+
+        if self.w is None:
+            raise RuntimeError('w not inited')
+
+        return np.dot(self.w, x) - y
+
+    def _fit(self, X, y):
+
+        if self.m_t is None:
+            self.m_t = np.zeros(X.shape[1])
+        if self.v_t is None:
+            self.v_t = np.zeros(X.shape[1])
+
+        g_t = self.d_loss(X, y) * X
+        self.m_t = self.beta1 * self.m_t + (1 - self.beta1) * g_t
+        self.v_t = self.beta2 * self.v_t + (1 - self.beta2) * g_t * g_t
+        m_cap = self.m_t / (1 - (self.beta1 ** self.t))
+        v_cap = self.v_t / (1 - (self.beta2 ** self.t))
+        self.w -= (self.alpha * m_cap) / (np.sqrt(v_cap) + self.epsilon)
 
 
 #######################################################################################################################

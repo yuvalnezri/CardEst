@@ -11,10 +11,18 @@ import multiprocessing
 import time
 
 
+##############################################################################
+# The following code is used to process pcap/ucla traces, calculate
+# true cardinality, sample, extract features and save to a dataframe.
+# each pcap trace was divided to files according to batche_size using editcap.
+# tshark is used to read pcaps files, multiprocessing is supported.
+##############################################################################
+
 # code referenced from the following NB: https://gist.github.com/dloss/5693316
 def read_pcap(filename, fields=[], display_filter="",
               timeseries=False, strict=False):
-    """ Read PCAP file into Pandas DataFrame object.
+    """
+    Read PCAP file into Pandas DataFrame object.
     Uses tshark command-line tool from Wireshark.
 
     filename:       Name or full path of the PCAP file to read
@@ -82,6 +90,9 @@ def pcap_to_df(filename):
 
 
 class BatchStats:
+    '''
+    This class holds the statisics for a single Batch.
+    '''
     def __init__(self):
         self.batch_size = None
         self.batch_card = None
@@ -161,7 +172,10 @@ class BatchStats:
         return np.array([features])
 
 
-class TraceStats():
+class TraceStats:
+    '''
+    This class holds the statistics for an entire trace (list of batches).
+    '''
     def __init__(self):
         self.batch_list = None
         self.batch_count = None

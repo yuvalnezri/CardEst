@@ -1,13 +1,16 @@
 import numpy as np
-from preprocessing import TraceStats
+from src.preprocessing import TraceStats
 from itertools import product
 import pandas as pd
 import matplotlib.pyplot as plt
 from time import perf_counter
 import pylatex as pl
+from cycler import cycler
 
-data_path = './../data/'
-output_path = '/home/ynezri/TexStudio/incremental/img/'
+data_path = '/Users/yuvalnezri/PycharmProjects/CardEst/data/'
+output_path = '/Users/yuvalnezri/TexStudio/cardest/img/'
+table_path = '/Users/yuvalnezri/TexStudio/cardest/tbl/'
+plot_format = 'pdf'
 
 #######################################################################################################################
 # Error Metrics
@@ -103,6 +106,9 @@ def time_estimate(tss, estimators):
 
 
 def time_fit(tss, estimators, estimator_names, feature_names):
+    """
+    compare time for fit operation between estimators
+    """
 
     time_d = {}
     counter = 0
@@ -141,6 +147,10 @@ def time_fit(tss, estimators, estimator_names, feature_names):
 
 
 def time_predict(tss, estimators, estimator_names, feature_names):
+    """
+    compare time of predict operation for estimators.
+    """
+
     time_d = {}
     counter = 0
 
@@ -183,10 +193,14 @@ def time_predict(tss, estimators, estimator_names, feature_names):
 # Evaluation Section Graphs
 #######################################################################################################################
 
+
 error_metrics = [RMSE, MAE, MAPE, MAXAE]
 
 
 def plot_card(trace, sampling_rate, partitions, ylim, xlabel='Batch Index'):
+    """
+    plot cardinality (baseline) for trace.
+    """
 
     for i in range(len(partitions)):
         partition = partitions[i]
@@ -196,44 +210,118 @@ def plot_card(trace, sampling_rate, partitions, ylim, xlabel='Batch Index'):
         ts.remove_last_batch()
 
         plt.figure()
-        ts.to_df().batch_card.plot()
+        truth = ts.to_df().batch_card
+        truth.name = 'real'
+        truth.plot()
         plt.ylabel('Batch cardinality (D)', fontsize=15)
         plt.xlabel(xlabel, fontsize=15)
         plt.ylim(ylim)
         plt.tight_layout()
-        plt.savefig(output_path + '%s_%s_card.png' % (trace, partition))
+        plt.savefig(output_path + '%s_%s_card.%s' % (trace, partition, plot_format), format=plot_format)
 
 
 def plot_sampling(trace, sampling_rate, partition, models, model_names, ylim, xlabel='Batch Index'):
+    """
+    plot results for statistical sampling based algorithms (thesis version).
+    """
 
     errors = {}
     ts = TraceStats.load(data_path + trace + '_' + partition + '_' + '%.4f.pickle' % sampling_rate)
     ts.remove_last_batch()
     truth = ts.to_df().batch_card
+    truth.name = 'real'
+
     for i in range(len(models)):
         estimator = models[i](name=model_names[i])
         est = ts.run_estimation(estimator)
         plt.figure()
         plt.plot(truth)
+
         plt.plot(est)
+
         plt.legend(loc=1)
         plt.ylim(ylim)
-        errors[estimator.name] = [error.error(truth, est) for error in error_metrics]
-
         plt.ylabel('Batch cardinality (D)', fontsize=15)
         plt.xlabel(xlabel, fontsize=15)
         plt.tight_layout()
-        plt.savefig(output_path + '%s_%s_sampling.png' % (trace, model_names[i]))
+        plt.savefig(output_path + '%s_%s_sampling.%s' % (trace, model_names[i], plot_format), format=plot_format)
+
+        errors[estimator.name] = [error.error(truth, est) for error in error_metrics]
+
+    return pd.DataFrame.from_dict(errors, orient='index',
+                                  columns=[error.name for error in error_metrics]).reindex(model_names)
+
+
+def plot_sampling_paper(trace, sampling_rate, partition, models, model_names, ylim, xlabel='Batch Index'):
+    """
+    plot results for statistical sampling based algorithms (paper version).
+    """
+
+    errors = {}
+    ts = TraceStats.load(data_path + trace + '_' + partition + '_' + '%.4f.pickle' % sampling_rate)
+    ts.remove_last_batch()
+    truth = ts.to_df().batch_card.interpolate()
+    truth.name = 'real'
+    lines = 0
+    plt.figure()
+    plt.rcParams.update({'legend.handlelength': 5})
+
+    monochrome = (cycler('color', ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728']) +
+                  cycler('linestyle', ['-', '--', ':', '-.']) +
+                  cycler('marker', ['o', '^', 's', 'v']))
+
+    markers = cycler('color', 'k') * cycler('marker', ['o', '^', 's', 'v'])
+
+    ax = plt.gca()
+    ax.set_prop_cycle(monochrome)
+    ax.grid(linestyle='--')
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['bottom'].set_visible(False)
+    ax.spines['left'].set_visible(False)
+
+    plt.plot(truth, linewidth=2, markevery=[0, -1],
+             markersize=7, markeredgecolor='k', markerfacecolor='k')
+
+    for i in range(len(models)):
+        estimator = models[i](name=model_names[i])
+        est = ts.run_estimation(estimator).interpolate()
+        plt.plot(est, linewidth=2, markevery=([0, -1]),
+                 markersize=7, markeredgecolor='k', markerfacecolor='k')
+
+    plt.legend(loc=1)
+
+    # re-plot markers
+    ax.set_prop_cycle(markers)
+    plt.plot(truth, linestyle='', markevery=((lines * 10) % 50, 50),
+             markersize=7, markeredgecolor='k', markerfacecolor='k')
+
+    for i in range(len(models)):
+        lines += 1
+        estimator = models[i](name=model_names[i])
+        est = ts.run_estimation(estimator).interpolate()
+        plt.plot(est, markevery=((lines * 10) % 50, 50),  linestyle='',
+                 markersize=7, markeredgecolor='k', markerfacecolor='k')
+        errors[estimator.name] = [error.error(truth, est) for error in error_metrics]
+
+    plt.ylim(ylim)
+    plt.ylabel('Batch cardinality (D)', fontsize=15)
+    plt.xlabel(xlabel, fontsize=15)
+    plt.tight_layout()
+    plt.savefig(output_path + '%s_sampling_paper.%s' % (trace, plot_format), format=plot_format)
     return pd.DataFrame.from_dict(errors, orient='index',
                                   columns=[error.name for error in error_metrics]).reindex(model_names)
 
 
 def plot_ml(trace, sampling_rate, training_rate, partition, features, models, model_names, ylim, xlabel='Batch Index'):
-
+    """
+    plot results for online ML algorithms (thesis version).
+    """
     errors = {}
     ts = TraceStats.load(data_path + trace + '_' + partition + '_' + '%.4f.pickle' % sampling_rate)
     ts.remove_last_batch()
     truth = ts.to_df().batch_card
+    truth.name = 'real'
 
     for i in range(len(models)):
         estimator = models[i](name=model_names[i], features=features, training_rate=training_rate)
@@ -242,20 +330,88 @@ def plot_ml(trace, sampling_rate, training_rate, partition, features, models, mo
 
         plt.figure()
         plt.plot(truth)
+
         plt.plot(est)
+
         plt.legend(loc=1)
         plt.ylim(ylim)
-        errors[estimator.name] = [error.error(truth, est) for error in error_metrics]
         plt.ylabel('Batch cardinality (D)', fontsize=15)
         plt.xlabel(xlabel, fontsize=15)
         plt.tight_layout()
-        plt.savefig(output_path + '%s_%s_online_ml.png' % (trace, model_names[i]))
+        plt.savefig(output_path + '%s_%s_online_ml.%s' % (trace, model_names[i], plot_format), format=plot_format)
+
+        errors[estimator.name] = [error.error(truth, est) for error in error_metrics]
 
     return pd.DataFrame.from_dict(errors, orient='index',
                                   columns=[error.name for error in error_metrics]).reindex(model_names)
 
 
-def plot_features(trace, sampling_rate, training_rate, partition, feature_sets, models, model_names, error=MAPE):
+def plot_ml_paper(trace, sampling_rate, training_rate, partition, features, models,
+                  model_names, ylim, xlabel='Batch Index'):
+    """
+    plot results for online ML algorithms (paper version).
+    """
+    errors = {}
+    ts = TraceStats.load(data_path + trace + '_' + partition + '_' + '%.4f.pickle' % sampling_rate)
+    ts.remove_last_batch()
+    truth = ts.to_df().batch_card
+    truth.name = 'real'
+    lines = 0
+
+    plt.rcParams.update({'legend.handlelength': 5})
+
+    monochrome = (cycler('color', ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728']) +
+                  cycler('linestyle', ['-', '--', ':', '-.']) +
+                  cycler('marker', ['o', '^', 's', 'v']))
+
+    plt.figure()
+    ax = plt.gca()
+    ax.set_prop_cycle(monochrome)
+    ax.grid(linestyle='--')
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['bottom'].set_visible(False)
+    ax.spines['left'].set_visible(False)
+
+    plt.plot(truth, markevery=[0, -1], linewidth=2,
+             markersize=7, markeredgecolor='k', markerfacecolor='k')
+
+    for i in range(len(models)):
+        estimator = models[i](name=model_names[i], features=features, training_rate=training_rate)
+        est = ts.run_estimation(estimator)
+        plt.plot(est, markevery=[0, -1],  linewidth=2,
+                 markersize=7, markeredgecolor='k', markerfacecolor='k')
+        errors[estimator.name] = [error.error(truth, est) for error in error_metrics]
+
+    plt.legend(loc=1)
+
+    # re-plot markers
+    plt.plot(truth, markevery=((lines * 10) % 50, 50), linestyle='',
+             markersize=7, markeredgecolor='k', markerfacecolor='k')
+
+    for i in range(len(models)):
+        lines += 1
+        estimator = models[i](name=model_names[i], features=features, training_rate=training_rate)
+        est = ts.run_estimation(estimator)
+        plt.plot(est, markevery=((lines * 10) % 50, 50),  linestyle='',
+                 markersize=7, markeredgecolor='k', markerfacecolor='k')
+        errors[estimator.name] = [error.error(truth, est) for error in error_metrics]
+
+    plt.ylim(ylim)
+    plt.ylabel('Batch cardinality (D)', fontsize=15)
+    plt.xlabel(xlabel, fontsize=15)
+    plt.tight_layout()
+    plt.savefig(output_path + '%s_online_ml_paper.%s' % (trace, plot_format), format=plot_format)
+
+    return pd.DataFrame.from_dict(errors, orient='index',
+                                  columns=[error.name for error in error_metrics]).reindex(model_names)
+
+
+def plot_features(trace, sampling_rate, training_rate, partition, feature_sets, models, model_names, error=MAPE,
+                  legend='outside', ylim=None):
+    """
+    plot comparison between different feature sets.
+    """
 
     error_d = {}
 
@@ -280,14 +436,34 @@ def plot_features(trace, sampling_rate, training_rate, partition, feature_sets, 
     plt.xticks(fontsize=15, rotation=0)
     labels = ['{' + ', '.join(feature_set) + '}' for feature_set in feature_sets]
     labels = [label.replace('f_', 'f') for label in labels]
-    lgd = plt.legend(title='Feature Set', labels=labels, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-    plt.savefig(output_path + '%s_features.png' % trace, bbox_extra_artists=(lgd,),
-                bbox_inches='tight')
+
+    plt.rcParams.update({'legend.handlelength': 3})
+    plt.rcParams.update({'legend.handleheight': 1})
+    ax = plt.gca()
+    bars = ax.patches
+    patterns = ['///', '--', '...', '\///', 'xxx', '\\\\']
+    hatches = [p for p in patterns for i in range(len(df))]
+    for bar, hatch in zip(bars, hatches):
+        bar.set_hatch(hatch)
+
+    if ylim is not None:
+        plt.ylim(ylim)
+
+    if legend == 'outside':
+        lgd = plt.legend(title='Feature Set', labels=labels, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+        plt.savefig(output_path + '%s_features.%s' % (trace, plot_format), bbox_extra_artists=(lgd,),
+                bbox_inches='tight', format=plot_format)
+    if legend == 'inside':
+        plt.legend(title='Feature Set', labels=labels)
+        plt.savefig(output_path + '%s_features.%s' % (trace, plot_format))
     return df
 
 
-def plot_tradeoff(trace, effective_sampling_rate, sampling_rates, partitions, features, model, model_name, error=MAPE):
-
+def plot_tradeoff(trace, effective_sampling_rate, sampling_rates, partitions, features, model, model_name, error=MAPE,
+                  legend='ouside', ylim=None):
+    """
+    plot sampling rate / training rate tradeoff.
+    """
     error_d = {}
     trainings = []
     labels = []
@@ -317,10 +493,28 @@ def plot_tradeoff(trace, effective_sampling_rate, sampling_rates, partitions, fe
     locs, _ = plt.xticks()
     ticks = [partition.replace('1S', '1 second').replace('S', ' seconds') for partition in partitions]
     plt.xticks(locs, ticks, fontsize=15, rotation=0)
-    lgd = plt.legend(labels=labels, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.,
-                     title='sampling_rate / training_rate')
-    plt.savefig(output_path + '%s_tradeoff.png' % trace, bbox_extra_artists=(lgd,),
-                bbox_inches='tight')
+
+    plt.rcParams.update({'legend.handlelength': 3})
+    plt.rcParams.update({'legend.handleheight': 1})
+    ax = plt.gca()
+    bars = ax.patches
+    patterns = ['///', '--', '...', '\///', 'xxx', '\\\\']
+    hatches = [p for p in patterns for i in range(len(df))]
+    for bar, hatch in zip(bars, hatches):
+        bar.set_hatch(hatch)
+
+    if ylim is not None:
+        plt.ylim(ylim)
+
+    if legend == 'outside':
+        lgd = plt.legend(labels=labels, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.,
+                         title='sampling_rate / training_rate')
+        plt.savefig(output_path + '%s_tradeoff.%s' % (trace, plot_format), bbox_extra_artists=(lgd,),
+                    bbox_inches='tight', format=plot_format)
+    if legend == 'inside':
+        lgd = plt.legend(labels=labels, title='sampling_rate / training_rate')
+        plt.savefig(output_path + '%s_tradeoff.%s' % (trace, plot_format), format=plot_format)
+
     return df
 
 
@@ -328,18 +522,26 @@ def plot_tradeoff(trace, effective_sampling_rate, sampling_rates, partitions, fe
 # Dataframe to PDF
 #######################################################################################################################
 
-def df_to_pdf(df, out_file, print_index=True, debug=False, digit_round=1, caption=None, comma_separated_columns=[]):
-
+def df_to_pdf(df, out_file, print_index=True, debug=False, digit_round=1, caption=None, comma_separated_columns=[],
+              gen_latex='False'):
+    """
+    convert data frame to pdf/latex. used to create tables for paper/thesis.
+    """
     if digit_round is not None:
         df = df.round(digit_round)
 
     for column in comma_separated_columns:
         df[column] = df[column].map('{:,}'.format)
 
+    table_columns = len(df.columns)+1 if print_index else len(df.columns)
+
+    if gen_latex:
+        with open(table_path + out_file + '.tex', 'w') as f:
+            f.write(df.to_latex(escape=False, index=print_index, column_format='c'*table_columns))
+        return
+
     doc = pl.Document(documentclass='standalone', document_options='varwidth')
     doc.packages.append(pl.Package('booktabs'))
-
-    table_columns = len(df.columns)+1 if print_index else len(df.columns)
 
     with doc.create(pl.MiniPage()):
         with doc.create(pl.Table(position='htbp')) as table:

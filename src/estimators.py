@@ -4,10 +4,18 @@ from collections import Counter
 
 
 class Estimator:
+    """
+    abstract estimator class.
+    """
     def __init__(self, name):
         self.name = name
 
     def estimate(self, batch_stats):
+        """
+        Returns an estimation over a single batch
+        :param batch_stats: BatchStats data structure of a single batch.
+        :return: cardinality estimation for batch_stats using Estimator.
+        """
         raise NotImplementedError
 
 
@@ -16,22 +24,13 @@ class Estimator:
 #######################################################################################################################
 
 
-class NaiveLearn(Estimator):
-    def __init__(self, name, training_rate):
-        super(NaiveLearn, self).__init__(name)
-        self.training_step = int(1 / training_rate)
-        self.batch_counter = 0
-        self.prev_estimation = None
-
-    def estimate(self, batch_stats):
-        if (self.batch_counter % self.training_step) == 0:
-            self.prev_estimation = batch_stats.batch_card
-
-        self.batch_counter += 1
-        return self.prev_estimation
-
-
 class GT(Estimator):
+    """
+    Good-Turing frequency estimator.
+    see - I. J. Good. The population frequencies of species and the estimation of population parameters.
+    Biometrika, 40(3-4), 1953.
+    """
+
     def __init__(self, name):
         super(GT, self).__init__(name)
 
@@ -43,6 +42,11 @@ class GT(Estimator):
 
 
 class GEE(Estimator):
+    """
+    Guaranteed Error Estimator.
+    see - M. Charikar, S. Chaudhuri, R. Motwani, and V. Narasayya. Towards estimation error guarantees for distinct
+    values. In Proceedings of the nineteenth ACM SIGMOD-SIGACT-SIGART. ACM, 2000.
+    """
     def __init__(self, name):
         super(GEE, self).__init__(name)
 
@@ -52,6 +56,11 @@ class GEE(Estimator):
 
 
 class AE(Estimator):
+    """
+    Adaptive Estimator.
+    see - M. Charikar, S. Chaudhuri, R. Motwani, and V. Narasayya. Towards estimation error guarantees for distinct
+    values. In Proceedings of the nineteenth ACM SIGMOD-SIGACT-SIGART. ACM, 2000.
+    """
     def __init__(self, name):
         super(AE, self).__init__(name)
 
@@ -79,6 +88,11 @@ class AE(Estimator):
 
 
 class UJ2A(Estimator):
+    """
+    UJ2A estimator.
+    see - P. J. Haas and L. Stokes. Estimating the number of classes in a finite population.
+    Journal of the American Statistical Association, 93(444), 1998.
+    """
     def __init__(self, name, c=50):
         super(UJ2A, self).__init__(name)
         self.c = c
@@ -115,6 +129,9 @@ class UJ2A(Estimator):
 
 
 class Regressor:
+    """
+    Online ML Regressor base class.
+    """
     def __init__(self, loss=None, d_loss=None, fit_intercept=True, tol=10 ** -3, max_iter=1000, verbose=False):
         self.w = None
         self.loss = loss
@@ -125,12 +142,30 @@ class Regressor:
         self.verbose = verbose
 
     def fit(self, X, y):
+        """
+        train for max_iter epochs.
+        :param X: features vector.
+        :param y: labels vector.
+
+        """
         return self._fit_n(X, y, self.max_iter)
 
     def partial_fit(self, X, y):
+        """
+        preform one epoch over small or one training example.
+        :param X: features vector.
+        :param y: labels vector.
+
+        """
         return self._fit_n(X, y, 1)
 
     def _fit_n(self, X, y, max_iter):
+        """
+        fit until max_iter epochs or convergence ((prev_loss - sum_loss) < self.tol * X.shape[0])
+        :param X: features vector.
+        :param y: labels vector.
+
+        """
 
         if type(X) is not np.ndarray:
             X = np.asarray(X)
@@ -153,29 +188,28 @@ class Regressor:
         prev_loss = float('Inf')
 
         for epoch in range(max_iter):
+
+            sum_loss = 0
             for i in range(X.shape[0]):
-
-                sum_loss = 0
-
                 self._fit(X[i, :], y[i])
 
                 if self.loss is not None:
                     sum_loss += self.loss(X[i, :], y[i])
 
             if self.loss is not None:
-                if sum_loss > prev_loss - self.tol * X.shape[0]:
+                if (prev_loss - sum_loss) < self.tol * X.shape[0]:
                     if self.verbose:
                         print('Converged after %d epochs.' % epoch)
 
                     break
 
-                prev_loss = sum_loss
+            prev_loss = sum_loss
 
         return self.w
 
     def _fit(self, X, y):
         """
-        One fit iteration, over one example.
+        abstract method. One fit iteration, over one example. Usually implemented by a Regressor class.
         """
         raise NotImplementedError
 
@@ -191,6 +225,10 @@ class Regressor:
 
 
 class SGDRegressor(Regressor):
+    """
+    Stochastic Gradient descent regressor.
+    """
+
     MAX_DLOSS = 10 ** 12
 
     def __init__(self, learning_rate=10 ** -6, **kwargs):
@@ -226,6 +264,12 @@ class SGDRegressor(Regressor):
 
 
 class PARegressor(Regressor):
+    """
+    Passive Agressive regressor.
+    See - K. Crammer, O. Dekel, J. Keshet, S. Shalev-Shwartz, and Y. Singer. Online passive-aggressive algorithms.
+    Journal of Machine Learning Research, 7(Mar), 2006.
+    """
+
     def __init__(self, C=1.0, epsilon=0.1, **kwargs):
         super().__init__(loss=self._epsilon_insensitive_loss, **kwargs)
 
@@ -248,7 +292,10 @@ class PARegressor(Regressor):
 
 
 class RLSRegressor(Regressor):
-    def __init__(self, mu=0.99, epsilon=0.1):
+    """
+    Recrusive Least Squares Regressor.
+    """
+    def __init__(self, mu=0.99, epsilon=0.1 ):
         """
         `mu` : forgetting factor (float). It is introduced to give exponentially
           less weight to older error samples. It is usually chosen
@@ -280,8 +327,21 @@ class RLSRegressor(Regressor):
         dw = np.dot(self.R, X.T) * error
         self.w += dw
 
+    def reset(self):
+        if self.R is not None:
+            self.R = 1 / self.epsilon * np.identity(self.R.shape[0])
+
+    def get_md(self, X):
+        return np.sqrt(np.dot(X.transpose(), np.dot(self.R, X)))
+
 
 class ADAMRegressor(Regressor):
+    """
+    ADAM Regressor.
+    See - D. P. Kingma and J. Ba. Adam: A method for stochastic optimization.
+    arXiv preprint arXiv:1412.6980, 2014.
+    """
+
     def __init__(self, alpha=0.001, beta1=0.9, beta2=0.999, epsilon=10**-8, **kwargs):
         super().__init__(loss=self._squared_loss, d_loss=self._d_squared_loss, **kwargs)
         self.alpha = alpha
@@ -292,19 +352,19 @@ class ADAMRegressor(Regressor):
         self.m_t = None
         self.v_t = None
 
-    def _squared_loss(self, x, y):
+    def _squared_loss(self, X, y):
 
         if self.w is None:
             raise RuntimeError('w not inited')
 
-        return 0.5 * (np.dot(self.w, x) - y) * (np.dot(self.w, x) - y)
+        return 0.5 * (np.dot(self.w, X) - y) * (np.dot(self.w, X) - y)
 
-    def _d_squared_loss(self, x, y):
+    def _d_squared_loss(self, X, y):
 
         if self.w is None:
             raise RuntimeError('w not inited')
 
-        return np.dot(self.w, x) - y
+        return np.dot(self.w, X) - y
 
     def _fit(self, X, y):
 
@@ -321,14 +381,59 @@ class ADAMRegressor(Regressor):
         self.w -= (self.alpha * m_cap) / (np.sqrt(v_cap) + self.epsilon)
 
 
+class NAGRegressor(Regressor):
+
+    def __init__(self, learning_rate = 0.1, **kwargs):
+        super().__init__(loss=self._squared_loss, d_loss=self._d_squared_loss, **kwargs)
+        self.learning_rate = learning_rate
+        self.s_i = None
+        self.G_i = None
+        self.N = 0
+        self.t = 0
+
+    def _fit(self, X, y):
+
+        if self.s_i is None:
+            self.s_i = np.zeros(X.shape[1])
+        if self.G_i is None:
+            self.G_i = np.zeros(X.shape[1])
+
+        self.t += 1
+
+        for i in range(len(X)):
+            if X[i] > self.s_i[i]:
+                self.w[i] = self.w[i]*self.s_i[i]/abs(X[i])
+                self.s_i[i] = abs(self.X[i])
+
+        self.N += np.sum((X ** 2) / (self.s_i ** 2))
+        self.G_i += self._d_squared_loss(X, y) ** 2
+        self.w -= self.learning_rate * np.sqrt(self.t/self.N) * self.s_i * np.sqrt(self.G_i) * self._d_squared_loss(X, y)
+
+    def _squared_loss(self, X, y):
+
+        if self.w is None:
+            raise RuntimeError('w not inited')
+
+        return 0.5 * (np.dot(self.w, X) - y) * (np.dot(self.w, X) - y)
+
+    def _d_squared_loss(self, X, y):
+
+        if self.w is None:
+            raise RuntimeError('w not inited')
+
+        return np.dot(self.w, X) - y
+
 #######################################################################################################################
 # Online ML Estimators
 #######################################################################################################################
 
 
 class MLEstimator(Estimator):
+    """
+    Abstract class for online ML estimator
+    """
     def __init__(self, name, model, training_rate, features):
-        super(MLEstimator, self).__init__(name)
+        super().__init__(name)
         self.features = features
         self.model = model
         self.training_rate = training_rate
@@ -353,7 +458,30 @@ class MLEstimator(Estimator):
         return estimation
 
 
+class NaiveLearn(MLEstimator):
+    """
+    The most naive step function estimator, returns the cardinality value of the previous training example.
+    """
+
+    def __init__(self, name, training_rate):
+        super(NaiveLearn, self).__init__(name)
+        self.training_step = int(1 / training_rate)
+        self.batch_counter = 0
+        self.prev_estimation = None
+
+    def estimate(self, batch_stats):
+        if (self.batch_counter % self.training_step) == 0:
+            self.prev_estimation = batch_stats.batch_card
+
+        self.batch_counter += 1
+        return self.prev_estimation
+
+
 class SGD(MLEstimator):
+    """
+
+    """
+
     def __init__(self, name, features, training_rate, **kwargs):
         model = SGDRegressor(**kwargs)
         super().__init__(name, model, training_rate, features)
@@ -371,27 +499,60 @@ class RLS(MLEstimator):
         super().__init__(name, model, training_rate, features)
 
 
+class ADAM(MLEstimator):
+    def __init__(self, name, features, training_rate, **kwargs):
+        model = ADAMRegressor(**kwargs)
+        super().__init__(name, model, training_rate, features)
+
+
+class NAG(MLEstimator):
+    def __init__(self, name, features, training_rate, **kwargs):
+        model = NAGRegressor(**kwargs)
+        super().__init__(name, model, training_rate, features)
+
+
 #######################################################################################################################
-# Active Online ML Estimators
+# Active Online ML
 #######################################################################################################################
 
 
 class ActiveEstimator(Estimator):
-    def __init__(self, name, model, threshold, features):
+    """
+    base class for active learning estimator. It trains over batches whose
+    Mahalanobis distance (https://en.wikipedia.org/wiki/Mahalanobis_distance) is larger then md_threshold.
+    """
+
+    def __init__(self, name, model, md_threshold, features, mu=0.99, epsilon=0.1, debug=False,
+                 outlier_threshold=0):
         super().__init__(name)
         self.features = features
         self.model = model
-        self.threshold = threshold
+        self.md_threshold = md_threshold
         self.batch_counter = 0
         self.train_counter = 0
-        self.train_history = []
+        self.outlier_counter = 0
+        self.sum_features = None
+        self.count_features = 0
+        self.outlier_threshold = outlier_threshold
+        self.debug = debug
+        self.cov_mat = None
+        self.mu = mu
+        self.epsilon = epsilon
 
-    def get_uncertainty(self, batch_stats):
-        raise NotImplementedError
+        if self.debug:
+            self.train_history = []
+            self.md_values = []
 
     def estimate(self, batch_stats):
 
         features = batch_stats.get_features(self.features)
+
+        if self.sum_features is None:
+            self.sum_features = features
+        else:
+            self.sum_features += features
+
+        self.count_features += 1
 
         if self.batch_counter == 0:
             # in the first example first perform a fit
@@ -399,53 +560,63 @@ class ActiveEstimator(Estimator):
 
         estimation = self.model.predict(features)[0]
 
-        # if uncertainty is bigger than threshold, train
-        if self.get_uncertainty(batch_stats) > self.threshold:
-            self.model.partial_fit(features, np.asarray([batch_stats.batch_card]))
-            self.train_counter += 1
-            self.train_history.append(self.batch_counter)
+        # init cov_mat
+        if self.cov_mat is None:
+            self.reset_cov_mat(features)
 
+        # if Mahalanobis distance is bigger than threshold, train.
+        md = self.get_md(features)
+        if self.debug:
+            self.md_values.append(md)
+
+        if md > self.md_threshold:
+            self.outlier_counter += 1
+        else:
+            self.outlier_counter = 0
+
+        if self.outlier_counter > self.outlier_threshold:
+            self.model.partial_fit(features, [batch_stats.batch_card])
+            self.train_counter += 1
+            if self.debug:
+                self.train_history.append(self.batch_counter)
+            self.reset_cov_mat(features)
+            self.sum_features = None
+            self.count_features = 0
+            self.outlier_counter = 0
         self.batch_counter += 1
         return estimation
 
+    def get_md(self, features):
+        return float(np.sqrt(np.dot(features.transpose(), np.dot(self.cov_mat, features))))
+
+    def reset_cov_mat(self, features):
+        self.cov_mat = 1 / self.epsilon * np.identity(features.shape[0])
+        self.update_cov_mat(features)
+
+    def get_mean(self):
+        return self.sum_features/self.count_features
+
+    def update_cov_mat(self, features):
+        R1 = np.dot(np.dot(np.dot(self.cov_mat, features), features.T), self.cov_mat)
+        R2 = self.mu + np.dot(np.dot(features, self.cov_mat), features.T)
+        self.cov_mat = 1 / self.mu * (self.cov_mat - R1 / R2)
+
 
 class RLSA(ActiveEstimator):
-    def __init__(self, name, features, threshold, mu=0.99, cr=None):
-        self.mu = mu
-        self.cr = cr
-
-        # debug ############
-        self.certainty = []
-        self.reset = []
-        ####################
-
-        # to align with sklearn's behaviour we only insatciate the model on first estimate,
-        # after number of features is known.
-        model = None
-        super().__init__(name, model, threshold, features)
-
-    def estimate(self, batch_stats):
-        if self.model is None:
-            n = self.features(batch_stats).shape[1]
-            self.model = RLSRegressor(n, self.mu)
-
-        # add CR-RLS functionality, reset R every cr trainings
-        if (self.cr is not None) and (self.batch_counter % self.cr == 0):
-            self.model.R = 1 / self.model.eps * np.identity(self.model.n)
-
-            # debug ########
-            self.reset.append(self.batch_counter)
-            ################
-
-        return super().estimate(batch_stats)
-
-    def get_uncertainty(self, batch_stats):
-        x = self.features(batch_stats)
-        cert = np.dot(x.flatten().transpose(), np.dot(self.model.R, x.flatten()))
-        self.certainty.append(cert)
-        return cert
+    """
+    Recursive Least Squares active estimator.
+    """
+    def __init__(self, name, features, mu=0.99, epsilon=0.1, md_threshold=0.4, debug=False):
+        model = RLSRegressor(mu, epsilon)
+        super().__init__(name, model, md_threshold, features, mu, epsilon, debug)
 
 
-
+class PAA(ActiveEstimator):
+    """
+    Passive Aggresive active estimator.
+    """
+    def __init__(self, name, features, mu=0.99, epsilon=0.1, md_threshold=0.4, debug=False, pa_c=1.0, pa_epsilon=0.1):
+        model = PARegressor(pa_c, pa_epsilon)
+        super().__init__(name, model, md_threshold, features, mu, epsilon, debug)
 
 

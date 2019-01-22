@@ -38,7 +38,7 @@ from the following datasets.
 
 The preprocessing module (./src/preprocessing.py) was used to create the dataframes.
 
-* Since only UCLA-CSD is available publicly, all other traces were excluded from this public repository.
+** Since only UCLA-CSD is available publicly, all other traces were excluded from this public repository. **
 
 ## Plotting
 

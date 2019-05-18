@@ -1,0 +1,161 @@
+\begin{thebibliography}{10}
+
+\bibitem{alipourfard2015re}
+O.~Alipourfard, M.~Moshref, and M.~Yu.
+\newblock Re-evaluating measurement algorithms in software.
+\newblock In {\em Proceedings of the 14th ACM Workshop on Hot Topics in
+  Networks}. ACM, 2015.
+
+\bibitem{alipourfard2018comparison}
+O.~Alipourfard, M.~Moshref, Y.~Zhou, T.~Yang, and M.~Yu.
+\newblock A comparison of performance and accuracy of measurement algorithms in
+  software.
+\newblock In {\em Proceedings of the Symposium on SDN Research}. ACM, 2018.
+
+\bibitem{ben2016heavy}
+R.~Ben-Basat, G.~Einziger, R.~Friedman, and Y.~Kassner.
+\newblock Heavy hitters in streams and sliding windows.
+\newblock In {\em IEEE INFOCOM 2016}.
+
+\bibitem{caidabackbone2016}
+{Center for Applied Internet Data Analysis - CAIDA}.
+\newblock {The CAIDA UCSD anonymized internet traces 2016 - equinix-chicago}.
+\newblock \url{http://www.caida.org/data/passive/passive_2016_dataset.xml}.
+
+\bibitem{caidaddos2007}
+{Center for Applied Internet Data Analysis - CAIDA}.
+\newblock {The {CAIDA UCSD ``DDoS attack 2007''} dataset}.
+\newblock \url{http://www.caida.org/data/passive/ddos-20070804_dataset.xml}.
+
+\bibitem{charikar2000towards}
+M.~Charikar, S.~Chaudhuri, R.~Motwani, and V.~Narasayya.
+\newblock Towards estimation error guarantees for distinct values.
+\newblock In {\em Proceedings of the nineteenth ACM SIGMOD-SIGACT-SIGART}. ACM,
+  2000.
+
+\bibitem{cohen2017cardinality}
+R.~Cohen, L.~Katzir, and A.~Yehezkel.
+\newblock Cardinality estimation meets {Good-Turing}.
+\newblock {\em Big Data Research}, 9, 2017.
+
+\bibitem{crammer2006online}
+K.~Crammer, O.~Dekel, J.~Keshet, S.~Shalev-Shwartz, and Y.~Singer.
+\newblock Online passive-aggressive algorithms.
+\newblock {\em Journal of Machine Learning Research}, 7(Mar), 2006.
+
+\bibitem{darpaddos}
+{Defense Advanced Research Projects Agency - DARPA}.
+\newblock {DARPA scalable network monitoring (SNM) program traffic, PREDICT ID:
+  USC-LANDER\textbackslash{}DARPA\_2009\_DDoS\_attack-20091105\textbackslash{}rev4383.}
+\newblock \url{http://www.darpa2009.netsec.colostate.edu/}.
+
+\bibitem{deolalikar2016extensive}
+V.~Deolalikar and H.~Laffitte.
+\newblock Extensive large-scale study of error in samping-based distinct value
+  estimators for databases.
+\newblock {\em arXiv preprint arXiv:1612.00476}, 2016.
+
+\bibitem{duchi2011adaptive}
+J.~Duchi, E.~Hazan, and Y.~Singer.
+\newblock Adaptive subgradient methods for online learning and stochastic
+  optimization.
+\newblock {\em Journal of Machine Learning Research}, 12(Jul):2121--2159, 2011.
+
+\bibitem{duffield2003estimating}
+N.~Duffield, C.~Lund, and M.~Thorup.
+\newblock Estimating flow distributions from sampled flow statistics.
+\newblock In {\em Proceedings of the 2003 conference on Applications,
+  Technologies, Architectures, and Protocols for Computer Communications}. ACM,
+  2003.
+
+\bibitem{einziger2017constant}
+G.~Einziger, M.~C. Luizelli, and E.~Waisbard.
+\newblock Constant time weighted frequency estimation for virtual network
+  functionalities.
+\newblock In {\em ICCCN}. IEEE, 2017.
+
+\bibitem{flajolet2007hyperloglog}
+P.~Flajolet, {\'E}.~Fusy, O.~Gandouet, and F.~Meunier.
+\newblock Hyperloglog: the analysis of a near-optimal cardinality estimation
+  algorithm.
+\newblock In {\em AofA: Analysis of Algorithms}. Discrete Mathematics and
+  Theoretical Computer Science, 2007.
+
+\bibitem{gale1995good}
+W.~A. Gale and G.~Sampson.
+\newblock {Good-Turing} frequency estimation without tears.
+\newblock {\em Journal of quantitative linguistics}, 2(3), 1995.
+
+\bibitem{gibbons2016distinct}
+P.~B. Gibbons.
+\newblock Distinct-values estimation over data streams.
+\newblock In {\em Data Stream Management}. Springer, 2016.
+
+\bibitem{good1953population}
+I.~J. Good.
+\newblock The population frequencies of species and the estimation of
+  population parameters.
+\newblock {\em Biometrika}, 40(3-4), 1953.
+
+\bibitem{grant1987recursive}
+I.~H. GRANT.
+\newblock Recursive least squares.
+\newblock {\em Teaching Statistics}, 9(1), 1987.
+
+\bibitem{haas1998estimating}
+P.~J. Haas and L.~Stokes.
+\newblock Estimating the number of classes in a finite population.
+\newblock {\em Journal of the American Statistical Association}, 93(444), 1998.
+
+\bibitem{hamilton2016quic}
+R.~Hamilton, J.~Iyengar, I.~Swett, and A.~Wilk.
+\newblock Quic: A {UDP}-based secure and reliable transport for {HTTP/2}.
+\newblock {\em IETF, draft-tsvwg-quic-protocol-02}, 2016.
+
+\bibitem{heule2013hyperloglog}
+S.~Heule, M.~Nunkesser, and A.~Hall.
+\newblock Hyperloglog in practice: algorithmic engineering of a state of the
+  art cardinality estimation algorithm.
+\newblock In {\em Proceedings of the 16th International Conference on Extending
+  Database Technology}. ACM, 2013.
+
+\bibitem{kiefer1952stochastic}
+J.~Kiefer and J.~Wolfowitz.
+\newblock Stochastic estimation of the maximum of a regression function.
+\newblock {\em The Annals of Mathematical Statistics}, 1952.
+
+\bibitem{kingma2014adam}
+D.~P. Kingma and J.~Ba.
+\newblock Adam: A method for stochastic optimization.
+\newblock {\em arXiv preprint arXiv:1412.6980}, 2014.
+
+\bibitem{mouratidis2006continuous}
+K.~Mouratidis, S.~Bakiras, and D.~Papadias.
+\newblock Continuous monitoring of top-k queries over sliding windows.
+\newblock In {\em ACM SIGMOD 2006}.
+
+\bibitem{pedregosa2011scikit}
+F.~Pedregosa, G.~Varoquaux, A.~Gramfort, V.~Michel, B.~Thirion, O.~Grisel,
+  M.~Blondel, P.~Prettenhofer, R.~Weiss, V.~Dubourg, et~al.
+\newblock Scikit-learn: Machine learning in python.
+\newblock {\em Journal of Machine Learning Research}, 12(Oct), 2011.
+
+\bibitem{pfaff2015design}
+B.~Pfaff, J.~Pettit, T.~Koponen, E.~J. Jackson, A.~Zhou, J.~Rajahalme,
+  J.~Gross, A.~Wang, J.~Stringer, P.~Shelar, et~al.
+\newblock The design and implementation of {Open vSwitch}.
+\newblock In {\em NSDI}, 2015.
+
+\bibitem{tieleman2012lecture}
+T.~Tieleman and G.~Hinton.
+\newblock Lecture 6.5-rmsprop: Divide the gradient by a running average of its
+  recent magnitude.
+\newblock {\em COURSERA: Neural networks for machine learning}, 4(2):26--31,
+  2012.
+
+\bibitem{uclacsd}
+{University of California, Los Angeles, CS department}.
+\newblock {UCLA CSD packet traces}.
+\newblock \url{https://lasr.cs.ucla.edu/ddos/traces/}.
+
+\end{thebibliography}

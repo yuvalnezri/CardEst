@@ -5,4 +5,6 @@ ipython/.ipynb_checkpoints/
 paper/*.log
 paper/*.aux
 paper/*.out
+paper/*.zip
+paper/*.synctex.gz
 

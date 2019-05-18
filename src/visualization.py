@@ -7,9 +7,9 @@ from time import perf_counter
 import pylatex as pl
 from cycler import cycler
 
-data_path = '/Users/yuvalnezri/PycharmProjects/CardEst/data/'
-output_path = '/Users/yuvalnezri/TexStudio/cardest/img/'
-table_path = '/Users/yuvalnezri/TexStudio/cardest/tbl/'
+data_path = '../data/'
+output_path = '../paper/img/'
+table_path = '../paper/tbl/'
 plot_format = 'pdf'
 
 #######################################################################################################################

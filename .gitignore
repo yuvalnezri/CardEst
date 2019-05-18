@@ -1,0 +1,8 @@
+__pycache__/
+.idea/
+.DS_Store
+ipython/.ipynb_checkpoints/
+paper/*.log
+paper/*.aux
+paper/*.out
+

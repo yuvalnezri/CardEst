@@ -5,7 +5,7 @@ This code is used to reproduce the results described in:
 
 "Cardinality Estimation in a Virtualized Network Device Using Online Machine Learning" by Cohen et. al.
 
-TODO: add link to paper once published.
+https://arxiv.org/abs/1903.05728
 
 ## Installation
 First, install requiremnts by using your favourite package manager:

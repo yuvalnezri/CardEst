@@ -201,17 +201,17 @@ class TraceStats:
         if multiprocess:
             p = multiprocessing.Pool()
             for parsed_file in p.imap(batch_parser, files):
-                clear_output()
-                print('%d/%d' % (current, batch_count))
-                stdout.flush()
+                # clear_output()
+                # print('%d/%d' % (current, batch_count))
+                # stdout.flush()
                 parsed_files.append(parsed_file)
                 current += 1
             p.close()
         else:
             for file in files:
-                clear_output()
-                print('%d/%d' % (current, batch_count))
-                stdout.flush()
+                # clear_output()
+                # print('%d/%d' % (current, batch_count))
+                # stdout.flush()
                 parsed_files.append(batch_parser(file))
                 current += 1
 

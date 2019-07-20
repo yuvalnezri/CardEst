@@ -448,7 +448,7 @@ Figure~\ref{fig:darpa-ddos_error}: the sampling rate is 0.01, the training rate 
 \end{figure}
 It is evident from Figure~\ref{fig:caida-ddos_delayed_batches} that
 when delayed batches is 1, we get the same MAPE values as in Figure~\ref{fig:darpa-ddos_error}. 
-It is also evident that both RLS and PA are only slightly affected by this delay, as long as it does not exceed 40. nd 
+It is also evident that both RLS and PA are only slightly affected by this delay, as long as it does not exceed 40, and 
 that SGD is unstable with respect to this parameter.  
 }
 
@@ -571,6 +571,15 @@ that SGD is unstable with respect to this parameter.
 				\label{table:time_fit}
 			\end{subfigure}
 			
+			\vspace{5mm}
+			\begin{subfigure}{.95\columnwidth}
+				\centering
+				\small
+				\input{tbl/time_features_labels}
+				\caption{\textcolor{red}{Average execution time in seconds for calculating entire batch cardinality and $f^i$ features from the sample}}
+				\label{table:time_features_labels}
+			\end{subfigure}
+		
 			\caption{Execution time analysis for CAIDA-2016 trace.}
 			\label{fig:time_analysis}
 		\end{figure}

@@ -197,7 +197,7 @@ def time_predict(tss, estimators, estimator_names, feature_names):
 error_metrics = [RMSE, MAE, MAPE, MAXAE]
 
 
-def plot_card(trace, sampling_rate, partitions, ylim, xlabel='Batch Index'):
+def plot_card(trace, sampling_rate, partitions, ylim, xlabel='Batch Index', savefig=False):
     """
     plot cardinality (baseline) for trace.
     """
@@ -217,10 +217,11 @@ def plot_card(trace, sampling_rate, partitions, ylim, xlabel='Batch Index'):
         plt.xlabel(xlabel, fontsize=15)
         plt.ylim(ylim)
         plt.tight_layout()
-        plt.savefig(output_path + '%s_%s_card.%s' % (trace, partition, plot_format), format=plot_format)
+        if savefig:
+            plt.savefig(output_path + '%s_%s_card.%s' % (trace, partition, plot_format), format=plot_format)
 
 
-def plot_sampling(trace, sampling_rate, partition, models, model_names, ylim, xlabel='Batch Index'):
+def plot_sampling(trace, sampling_rate, partition, models, model_names, ylim, xlabel='Batch Index', savefig=False):
     """
     plot results for statistical sampling based algorithms (thesis version).
     """
@@ -244,7 +245,8 @@ def plot_sampling(trace, sampling_rate, partition, models, model_names, ylim, xl
         plt.ylabel('Batch cardinality (D)', fontsize=15)
         plt.xlabel(xlabel, fontsize=15)
         plt.tight_layout()
-        plt.savefig(output_path + '%s_%s_sampling.%s' % (trace, model_names[i], plot_format), format=plot_format)
+        if savefig:
+            plt.savefig(output_path + '%s_%s_sampling.%s' % (trace, model_names[i], plot_format), format=plot_format)
 
         errors[estimator.name] = [error.error(truth, est) for error in error_metrics]
 
@@ -252,7 +254,8 @@ def plot_sampling(trace, sampling_rate, partition, models, model_names, ylim, xl
                                   columns=[error.name for error in error_metrics]).reindex(model_names)
 
 
-def plot_sampling_paper(trace, sampling_rate, partition, models, model_names, ylim, xlabel='Batch Index'):
+def plot_sampling_paper(trace, sampling_rate, partition, models, model_names, ylim, xlabel='Batch Index',
+                        savefig=False):
     """
     plot results for statistical sampling based algorithms (paper version).
     """
@@ -308,12 +311,16 @@ def plot_sampling_paper(trace, sampling_rate, partition, models, model_names, yl
     plt.ylabel('Batch cardinality (D)', fontsize=15)
     plt.xlabel(xlabel, fontsize=15)
     plt.tight_layout()
-    plt.savefig(output_path + '%s_sampling_paper.%s' % (trace, plot_format), format=plot_format)
+
+    if savefig:
+        plt.savefig(output_path + '%s_sampling_paper.%s' % (trace, plot_format), format=plot_format)
+
     return pd.DataFrame.from_dict(errors, orient='index',
                                   columns=[error.name for error in error_metrics]).reindex(model_names)
 
 
-def plot_ml(trace, sampling_rate, training_rate, partition, features, models, model_names, ylim, xlabel='Batch Index'):
+def plot_ml(trace, sampling_rate, training_rate, partition, features, models, model_names, ylim, xlabel='Batch Index',
+            savefig=False):
     """
     plot results for online ML algorithms (thesis version).
     """
@@ -338,7 +345,8 @@ def plot_ml(trace, sampling_rate, training_rate, partition, features, models, mo
         plt.ylabel('Batch cardinality (D)', fontsize=15)
         plt.xlabel(xlabel, fontsize=15)
         plt.tight_layout()
-        plt.savefig(output_path + '%s_%s_online_ml.%s' % (trace, model_names[i], plot_format), format=plot_format)
+        if savefig:
+            plt.savefig(output_path + '%s_%s_online_ml.%s' % (trace, model_names[i], plot_format), format=plot_format)
 
         errors[estimator.name] = [error.error(truth, est) for error in error_metrics]
 
@@ -347,7 +355,7 @@ def plot_ml(trace, sampling_rate, training_rate, partition, features, models, mo
 
 
 def plot_ml_paper(trace, sampling_rate, training_rate, partition, features, models,
-                  model_names, ylim, xlabel='Batch Index'):
+                  model_names, ylim, xlabel='Batch Index', savefig=False):
     """
     plot results for online ML algorithms (paper version).
     """
@@ -401,14 +409,16 @@ def plot_ml_paper(trace, sampling_rate, training_rate, partition, features, mode
     plt.ylabel('Batch cardinality (D)', fontsize=15)
     plt.xlabel(xlabel, fontsize=15)
     plt.tight_layout()
-    plt.savefig(output_path + '%s_online_ml_paper.%s' % (trace, plot_format), format=plot_format)
+
+    if savefig:
+        plt.savefig(output_path + '%s_online_ml_paper.%s' % (trace, plot_format), format=plot_format)
 
     return pd.DataFrame.from_dict(errors, orient='index',
                                   columns=[error.name for error in error_metrics]).reindex(model_names)
 
 
 def plot_features(trace, sampling_rate, training_rate, partition, feature_sets, models, model_names, error=MAPE,
-                  legend='outside', ylim=None):
+                  legend='outside', ylim=None, savefig=False):
     """
     plot comparison between different feature sets.
     """
@@ -451,16 +461,20 @@ def plot_features(trace, sampling_rate, training_rate, partition, feature_sets, 
 
     if legend == 'outside':
         lgd = plt.legend(title='Feature Set', labels=labels, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-        plt.savefig(output_path + '%s_features.%s' % (trace, plot_format), bbox_extra_artists=(lgd,),
-                bbox_inches='tight', format=plot_format)
+
+        if savefig:
+            plt.savefig(output_path + '%s_features.%s' % (trace, plot_format), bbox_extra_artists=(lgd,),
+                        bbox_inches='tight', format=plot_format)
     if legend == 'inside':
         plt.legend(title='Feature Set', labels=labels)
-        plt.savefig(output_path + '%s_features.%s' % (trace, plot_format))
+
+        if savefig:
+            plt.savefig(output_path + '%s_features.%s' % (trace, plot_format))
     return df
 
 
 def plot_tradeoff(trace, effective_sampling_rate, sampling_rates, partitions, features, model, model_name, error=MAPE,
-                  legend='ouside', ylim=None):
+                  legend='outside', ylim=None, savefig=False):
     """
     plot sampling rate / training rate tradeoff.
     """
@@ -498,7 +512,7 @@ def plot_tradeoff(trace, effective_sampling_rate, sampling_rates, partitions, fe
     plt.rcParams.update({'legend.handleheight': 1})
     ax = plt.gca()
     bars = ax.patches
-    patterns = ['///', '--', '...', '\///', 'xxx', '\\\\']
+    patterns = ['///', '--', '...', '\///', "+", "x", "o", "O", ".", "*", 'xxx', '\\\\']
     hatches = [p for p in patterns for i in range(len(df))]
     for bar, hatch in zip(bars, hatches):
         bar.set_hatch(hatch)
@@ -509,11 +523,14 @@ def plot_tradeoff(trace, effective_sampling_rate, sampling_rates, partitions, fe
     if legend == 'outside':
         lgd = plt.legend(labels=labels, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.,
                          title='sampling_rate / training_rate')
-        plt.savefig(output_path + '%s_tradeoff.%s' % (trace, plot_format), bbox_extra_artists=(lgd,),
-                    bbox_inches='tight', format=plot_format)
+        if savefig:
+            plt.savefig(output_path + '%s_tradeoff.%s' % (trace, plot_format), bbox_extra_artists=(lgd,),
+                        bbox_inches='tight', format=plot_format)
     if legend == 'inside':
         lgd = plt.legend(labels=labels, title='sampling_rate / training_rate')
-        plt.savefig(output_path + '%s_tradeoff.%s' % (trace, plot_format), format=plot_format)
+
+        if savefig:
+            plt.savefig(output_path + '%s_tradeoff.%s' % (trace, plot_format), format=plot_format)
 
     return df
 
@@ -554,3 +571,101 @@ def df_to_pdf(df, out_file, print_index=True, debug=False, digit_round=1, captio
         return doc.dumps()
 
     doc.generate_pdf(output_path + out_file)
+
+
+#######################################################################################################################
+# TON Corrections
+#######################################################################################################################
+
+
+def plot_delayed_batches(trace, sampling_rate, training_rate, partition, feature_set, models, model_names,
+                         min_delay, max_delay, delay_step=1, error=MAPE, ylim=None, savefig=False):
+
+    ts = TraceStats.load(data_path + trace + '_' + partition + '_' + '%.4f.pickle' % sampling_rate)
+    ts.remove_last_batch()
+    truth = ts.to_df().batch_card
+    data = []
+
+    for model, model_name in zip(models, model_names):
+        for delay in range(min_delay, max_delay+1, delay_step):
+
+            estimator = model(name=model_name, features=feature_set, training_rate=training_rate, training_delay=delay)
+            est = ts.run_estimation(estimator)
+            data.append([model_name, delay, error.error(truth, est)])
+
+    df = pd.DataFrame(data, columns=['Model Name', 'Delayed Batches', error.name])
+    df = df.pivot(index='Delayed Batches', columns='Model Name', values=error.name)
+
+    df[model_names].plot()
+    if ylim:
+        plt.ylim(ylim[0], ylim[1])
+
+    plt.ylabel(error.name, fontsize=15)
+    plt.xlabel('Delayed Batches', fontsize=15)
+
+    if savefig:
+        plt.savefig(output_path + '%s_delayed_batches.%s' % (trace, plot_format), format=plot_format)
+
+    return df
+
+
+def plot_tradeoff_new(trace, effective_sampling_rate, sampling_rates, partitions, features, model, model_name,
+                      error=MAPE, legend='outside', ylim=None, savefig=False):
+    """
+    plot sampling rate / training rate tradeoff.
+    """
+    error_d = {}
+    trainings = []
+    labels = []
+
+    for i, j in product(range(len(partitions)), range(len(sampling_rates))):
+        if j == 0:
+            partition = partitions[i]
+            error_d[partition] = []
+        sampling_rate = sampling_rates[j]
+        training_rate = (effective_sampling_rate - sampling_rate) / (1 - sampling_rate)
+        labels.append('%.4f / %.4f' % (sampling_rate, training_rate))
+
+        ts = TraceStats.load(data_path + trace + '_' + partition + '_' + '%.4f.pickle' % sampling_rate)
+        ts.remove_last_batch()
+        truth = ts.to_df().batch_card
+        trainings.append(ts.batch_count * training_rate)
+
+        estimator = model(name=model_name, features=features, training_rate=training_rate)
+
+        est = ts.run_estimation(estimator)
+        error_d[partition].append(error.error(truth, est))
+
+    df = pd.DataFrame.from_dict(error_d, orient='index').reindex(partitions)
+    df.columns = map(str, sampling_rates)
+    df.plot(kind='bar')
+    plt.ylabel(error.name, fontsize=15)
+    locs, _ = plt.xticks()
+    ticks = [partition.replace('1S', '1 second').replace('S', ' seconds') for partition in partitions]
+    plt.xticks(locs, ticks, fontsize=15, rotation=0)
+
+    plt.rcParams.update({'legend.handlelength': 3})
+    plt.rcParams.update({'legend.handleheight': 1})
+    ax = plt.gca()
+    bars = ax.patches
+    patterns = ['///', '--', '...', '\///', "+", "x", "o", "O", ".", "*", 'xxx', '\\\\']
+    hatches = [p for p in patterns for i in range(len(df))]
+    for bar, hatch in zip(bars, hatches):
+        bar.set_hatch(hatch)
+
+    if ylim is not None:
+        plt.ylim(ylim)
+
+    if legend == 'outside':
+        lgd = plt.legend(labels=labels, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.,
+                         title='sampling_rate / training_rate')
+        if savefig:
+            plt.savefig(output_path + '%s_tradeoff_new.%s' % (trace, plot_format), bbox_extra_artists=(lgd,),
+                        bbox_inches='tight', format=plot_format)
+    if legend == 'inside':
+        lgd = plt.legend(labels=labels, title='sampling_rate / training_rate')
+
+        if savefig:
+            plt.savefig(output_path + '%s_tradeoff_new.%s' % (trace, plot_format), format=plot_format)
+
+    return df

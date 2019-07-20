@@ -1,10 +1,11 @@
 appnope==0.1.0
 backcall==0.1.0
 bleach==3.0.2
-certifi==2018.10.15
+certifi==2019.3.9
 cycler==0.10.0
 decorator==4.3.0
 entrypoints==0.2.3
+ipdb==0.12
 ipykernel==5.1.0
 ipython==7.2.0
 ipython-genutils==0.2.0
@@ -44,6 +45,7 @@ six==1.11.0
 terminado==0.8.1
 testpath==0.4.2
 tornado==5.1.1
+tqdm==4.32.1
 traitlets==4.3.2
 wcwidth==0.1.7
 webencodings==0.5.1

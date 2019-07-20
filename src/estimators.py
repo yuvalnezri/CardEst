@@ -19,6 +19,24 @@ class Estimator:
         raise NotImplementedError
 
 
+class NaiveLearn(Estimator):
+    """
+    The most naive step function estimator, returns the cardinality value of the previous training example.
+    """
+
+    def __init__(self, name, training_rate):
+        super(NaiveLearn, self).__init__(name)
+        self.training_step = int(1 / training_rate)
+        self.batch_counter = 0
+        self.prev_estimation = None
+
+    def estimate(self, batch_stats):
+        if (self.batch_counter % self.training_step) == 0:
+            self.prev_estimation = batch_stats.batch_card
+
+        self.batch_counter += 1
+        return self.prev_estimation
+
 #######################################################################################################################
 # Statistical Estimators
 #######################################################################################################################
@@ -432,7 +450,7 @@ class MLEstimator(Estimator):
     """
     Abstract class for online ML estimator
     """
-    def __init__(self, name, model, training_rate, features):
+    def __init__(self, name, model, training_rate, features, training_delay):
         super().__init__(name)
         self.features = features
         self.model = model
@@ -440,75 +458,68 @@ class MLEstimator(Estimator):
         self.training_step = int(1 / training_rate)
         self.batch_counter = 0
 
+        if training_delay > self.training_step:
+            raise ValueError('Training delay is bigger than training step')
+
+        self.training_delay = training_delay
+        self._delay_activated = False
+        self._training_delay_count = training_delay
+
     def estimate(self, batch_stats):
 
         features = batch_stats.get_features(self.features)
 
         if self.batch_counter == 0:
-            # in the first example first perform a fit
+            # in the first example, first perform a fit
             self.model.fit(features, [batch_stats.batch_card])
 
         estimation = self.model.predict(features)[0]
 
         if (self.batch_counter % self.training_step) == 0 and self.batch_counter != 0:
-            self.model.partial_fit(features, [batch_stats.batch_card])
+            self._delay_activated = True
+
+        # this is used to simulate a delayed training phase
+        if self._delay_activated:
+            if self._training_delay_count > 0:
+                self._training_delay_count -= 1
+            elif self._training_delay_count == 0:
+                self.model.partial_fit(features, [batch_stats.batch_card])
+                self._delay_activated = False
+                self._training_delay_count = self.training_delay
 
         self.batch_counter += 1
 
         return estimation
 
 
-class NaiveLearn(MLEstimator):
-    """
-    The most naive step function estimator, returns the cardinality value of the previous training example.
-    """
-
-    def __init__(self, name, training_rate):
-        super(NaiveLearn, self).__init__(name)
-        self.training_step = int(1 / training_rate)
-        self.batch_counter = 0
-        self.prev_estimation = None
-
-    def estimate(self, batch_stats):
-        if (self.batch_counter % self.training_step) == 0:
-            self.prev_estimation = batch_stats.batch_card
-
-        self.batch_counter += 1
-        return self.prev_estimation
-
-
 class SGD(MLEstimator):
-    """
-
-    """
-
-    def __init__(self, name, features, training_rate, **kwargs):
+    def __init__(self, name, features, training_rate, training_delay=1, **kwargs):
         model = SGDRegressor(**kwargs)
-        super().__init__(name, model, training_rate, features)
+        super().__init__(name, model, training_rate, features, training_delay)
 
 
 class PA(MLEstimator):
-    def __init__(self, name, features, training_rate, **kwargs):
+    def __init__(self, name, features, training_rate, training_delay=1, **kwargs):
         model = PARegressor(**kwargs)
-        super().__init__(name, model, training_rate, features)
+        super().__init__(name, model, training_rate, features, training_delay)
 
 
 class RLS(MLEstimator):
-    def __init__(self, name, features, training_rate, **kwargs):
+    def __init__(self, name, features, training_rate, training_delay=1, **kwargs):
         model = RLSRegressor(**kwargs)
-        super().__init__(name, model, training_rate, features)
+        super().__init__(name, model, training_rate, features, training_delay)
 
 
 class ADAM(MLEstimator):
-    def __init__(self, name, features, training_rate, **kwargs):
+    def __init__(self, name, features, training_rate, training_delay=1, **kwargs):
         model = ADAMRegressor(**kwargs)
-        super().__init__(name, model, training_rate, features)
+        super().__init__(name, model, training_rate, features, training_delay)
 
 
 class NAG(MLEstimator):
-    def __init__(self, name, features, training_rate, **kwargs):
+    def __init__(self, name, features, training_rate, training_delay=1, **kwargs):
         model = NAGRegressor(**kwargs)
-        super().__init__(name, model, training_rate, features)
+        super().__init__(name, model, training_rate, features, training_delay)
 
 
 #######################################################################################################################

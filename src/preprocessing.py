@@ -4,8 +4,6 @@ import pandas as pd
 import numpy as np
 import pickle
 from glob import glob
-from IPython.display import clear_output
-from sys import stdout
 from collections import Counter
 import multiprocessing
 import time
@@ -90,9 +88,9 @@ def pcap_to_df(filename):
 
 
 class BatchStats:
-    '''
+    """
     This class holds the statisics for a single Batch.
-    '''
+    """
     def __init__(self):
         self.batch_size = None
         self.batch_card = None
@@ -102,7 +100,8 @@ class BatchStats:
         self.histogram = None
         self.avg_pkt_len = None
         self.syn_count = None
-        self.fin_count = None
+        self.process_batch_time = None
+        self.process_sample_time = None
 
     @staticmethod
     def generate(probs):
@@ -113,29 +112,42 @@ class BatchStats:
 
         batch = BatchStats()
 
+        process_batch_begin = time.perf_counter()
         packets = trace_df.apply(lambda x: hash((x['ip.src'], x['ip.dst'],
                                                  x['tcp.port'], x['udp.port'], x['ip.proto'])), axis=1)
         batch.batch_card = len(np.unique(packets))
+        process_batch_end = time.perf_counter()
+
+        # TODO: add hyperloglog calculation
 
         # sample batch
         batch.batch_size = len(packets)
         batch.sampling_rate = sampling_rate
         batch.sample_size = int(sampling_rate * batch.batch_size)
         sampled_indices = np.random.choice(batch.batch_size, batch.sample_size, replace=False)
-        sample = packets[sampled_indices]
+
+        process_sample_begin = time.perf_counter()
+        sampled_packets = trace_df[sampled_indices].apply(lambda x: hash((x['ip.src'], x['ip.dst'],
+                                                                          x['tcp.port'], x['udp.port'],
+                                                                          x['ip.proto'])), axis=1)
 
         # calc batch flow size histogram
-        unique, counts = np.unique(sample, return_counts=True)
+        unique, counts = np.unique(sampled_packets, return_counts=True)
         batch.sample_card = len(unique)
 
         # calc batch flow distrubution histogram
         unique, counts = np.unique(counts, return_counts=True)
+
+        process_sample_end = time.perf_counter()
+
         batch.histogram = Counter(dict(zip(unique, counts)))
 
         sampled_df = trace_df.iloc[sampled_indices]
         batch.avg_pkt_len = sampled_df['frame.len'].mean()
         batch.syn_count = len(sampled_df[sampled_df['tcp.flags.syn'] == 1])
         batch.fin_count = len(sampled_df[sampled_df['tcp.flags.fin'] == 1])
+        batch.process_batch_time = process_batch_end - process_batch_begin
+        batch.process_sample_time = process_sample_end - process_sample_begin
 
         return batch
 
@@ -199,17 +211,11 @@ class TraceStats:
         if multiprocess:
             p = multiprocessing.Pool()
             for parsed_file in p.imap(batch_parser, files):
-                clear_output()
-                print('%d/%d' % (current, batch_count))
-                stdout.flush()
                 parsed_files.append(parsed_file)
                 current += 1
             p.close()
         else:
             for file in files:
-                clear_output()
-                print('%d/%d' % (current, batch_count))
-                stdout.flush()
                 parsed_files.append(batch_parser(file))
                 current += 1
 

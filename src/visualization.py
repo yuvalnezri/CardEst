@@ -189,6 +189,17 @@ def time_predict(tss, estimators, estimator_names, feature_names):
     df[estimator_names] = df[estimator_names].applymap('{:,.2e}'.format)
     return df
 
+def time_features_labels(tss):
+
+    time_d = []
+    for ts in tss:
+        time_d.append({'Sampling Rate': ts.batch_list[0].sampling_rate,
+                       'Labeling (mean)': np.mean([batch.process_batch_time for batch in ts.batch_list]),
+                       'Featurization (mean)': np.mean([batch.process_sample_time for batch in ts.batch_list])})
+
+    return pd.DataFrame(time_d)
+
+
 #######################################################################################################################
 # Evaluation Section Graphs
 #######################################################################################################################

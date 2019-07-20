@@ -129,7 +129,7 @@ class BatchStats:
         sampled_indices = np.random.choice(batch.batch_size, batch.sample_size, replace=False)
 
         process_sample_begin = time.perf_counter()
-        sampled_packets = trace_df[sampled_indices].apply(lambda x: hash((x['ip.src'], x['ip.dst'],
+        sampled_packets = trace_df.iloc[sampled_indices].apply(lambda x: hash((x['ip.src'], x['ip.dst'],
                                                                           x['tcp.port'], x['udp.port'],
                                                                           x['ip.proto'])), axis=1)
 

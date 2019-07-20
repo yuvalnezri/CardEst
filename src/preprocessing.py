@@ -53,12 +53,14 @@ def read_pcap(filename, fields=[], display_filter="",
     proc = subprocess.Popen(cmd, shell=True,
                             stdout=subprocess.PIPE)
     if timeseries:
-        df = pd.read_table(proc.stdout,
-                           index_col="frame.time_epoch",
-                           parse_dates=True,
-                           date_parser=datetime.datetime.fromtimestamp)
+        df = pd.read_csv(proc.stdout,
+			sep='\t',
+			index_col="frame.time_epoch",
+			parse_dates=True,
+			date_parser=datetime.datetime.fromtimestamp,
+			low_memory=False)
     else:
-        df = pd.read_table(proc.stdout)
+        df = pd.read_csv(proc.stdout, sep='\t', low_memory=False)
     return df
 
 
@@ -66,9 +68,9 @@ def ucla_to_df(filename):
     '''
     used to read a single TCP ucla trace file to dataframe.
     '''
-    df = pd.read_table(filename,
+    df = pd.read_csv(filename,
                        names=['ip.src', 'ip.dst', 'port.src', 'port.dst', 'frame.len', 'flag'],
-                       sep=' ', usecols=range(1, 7))
+                       sep=' ', usecols=range(1, 7), low_memory=False)
     df['tcp.port'] = df.apply(lambda x: '%d,%d' % (x['port.src'], x['port.dst']), axis=1)
     df = df.drop(labels=['port.src', 'port.dst'], axis=1)
     df['udp.port'] = np.nan

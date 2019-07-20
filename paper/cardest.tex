@@ -5,7 +5,7 @@
 	
 	Cardinality estimation algorithms are roughly divided into two categories: sampling algorithms and sketching algorithms. Sampling algorithms process only a subset of the stream, and use statistical analysis for estimating the cardinality of the entire stream. Such algorithms are very efficient in terms of their processing time and memory consumption. However, they have a relatively high error rate \cite{charikar2000towards}, especially when the stream has a skewed (power-law) distribution \cite{deolalikar2016extensive}.
 	
-	Sketching algorithms (HLL \cite{flajolet2007hyperloglog}, HLL++ \cite{heule2013hyperloglog}) are known to offer the best performance in terms of statistical accuracy and memory storage. However, their main disadvantage is that they must process all the packets in the data stream. For this reason they are very often implemented using dedicated hardware.
+	Sketching algorithms (HLL \cite{flajolet2007hyperloglog}, HLL++ \cite{heule2013hyperloglog}) are known to offer the best performance in terms of statistical accuracy and memory storage. However, their main disadvantage is that they must process all the packets in the data stream. For this reason they have to be implemented using dedicated hardware\cite{Liu:2016}.
 	
 	Software network devices are gaining popularity due to the rise of two new network architecture concepts: Software Defined Networking (SDN)  and Network Function Virtualization (NFV). The transition from executing cardinality estimation algorithms by dedicated hardware to executing them by a general purpose CPU introduces new challenges. Even with a very small number of operations per packet, processing every stream packet by a general purpose CPU is inefficient and in many cases even impossible \cite{alipourfard2015re,alipourfard2018comparison}. Because it is usually impossible to process all the packets, sketching cannot be used. In such cases we must resort to sampling-based solutions.
 	
@@ -36,7 +36,7 @@
 	
 \section{Preliminaries} \label{sec:perliminaries}
 	
-	As indicated in the previous sections, a software device should not use sketching. On the other hand, sampling-based algorithms are known to have relatively low accuracy. To address this trafe-off, the framework proposed in this paper combines sampling with online machine learning (ML). We start with a short discussion of each of these concepts.
+	As indicated in the previous sections, a software device should not use sketching. On the other hand, sampling-based algorithms are known to have relatively low accuracy. To address this trade-off, the framework proposed in this paper combines sampling with online machine learning (ML). We start with a short discussion of each of these concepts.
 	
 	\subsection{Estimating Stream Cardinality from a Sample} \label{subsec:sampling}
 	
@@ -62,11 +62,21 @@
 		
 		A typical workflow of a sampling cardinality estimation algorithm over network traffic is as follows. The entire traffic stream $S$ is divided into batches $[S_1, S_2, ..., S_i, ...]$, and each batch $S_i$ is analyzed separately. A sample $s_i$ of $n_i$ packets is collected from $S_i$ according to a specific sampling rate $q$, using some sampling method. While several sampling methods have been proposed in the past \cite{einziger2017constant}, in this paper we consider random sampling, where all packets are sampled with the same probability. After a sample of packets is collected from the batch, various statistical properties are calculated from it, and an estimation of the flow cardinality is produced. 
 		
-		A commonly used statistical property is $f_i^j$, namely, the number of flows that appear exactly $j$ times in $s_i$. A special case is $f_i^0$, which represents the number of flows that appear in $S_i$ but not in $s_i$. Since $D_i=d_i+f_i^0$,  estimating $D_i$ can be reduced to estimating $f_i^0$, i.e.\, the number of ``hidden'' flows. Various works discuss the relation between $f_i^0$ and $f_i^j$ values. For example, the Good-Turing frequency estimation technique \cite{good1953population} claims that $\frac{f_i^1}{n}$ is a consistent estimator of $f_i^0$.
+A commonly used statistical property is $f_i^j$,
+namely, the number of flows that appear exactly $j$
+times in $s_i$. A special case is $f_i^0$, which
+represents the number of flows that appear in $S_i$
+but not in $s_i$. Since $D_i=d_i+f_i^0$,  estimating
+$D_i$ can be reduced to estimating $f_i^0$, i.e.\,
+the number of ``hidden'' flows. 
+
 
 	\subsection{Online Machine Learning}
 	
-		Describing the details of ML is beyond the scope of this work. We therefore describe only the standard ML procedures we use. We use Scikit-Learn's abstraction of ML algorithms \cite{pedregosa2011scikit} throughout the paper. According to this abstraction, a supervised ML algorithm includes two basic operations:
+We now describe the standard ML
+procedures we use. To this end, we use the Scikit-Learn's abstraction of
+ML algorithms \cite{pedregosa2011scikit}. According to this abstraction, a supervised ML
+algorithm includes two basic operations:
 		
 		\begin{itemize}
 			\item $fit(training\_examples, labels)$ -- The fit operation receives a set of training examples and their matching labels, and returns a ``trained ML model'', which is capable of delivering predictions from unlabeled examples. Each example consists of a set of features, where every feature is a property of the data that contributes to the estimation. For example, to train a ML model to predict housing prices, the features could be the size of the house, the number of rooms and the neighborhood. The label is the desired output value, i.e., the actual price of each house. For clarification, we use the term ``ML model'' to describe an instance of an ML algorithm after it is provided with training data.  
@@ -341,16 +351,41 @@
 			\caption{The impact of extending the feature set on the accuracy of our framework for the CAIDA-2016 trace}
 			\label{fig:caida-2016_features}
 		\end{figure}
+
+\textcolor{red}{
+The fact that $\{f_i^1\}$ is the most important feature, and that other features
+only slightly improve the estimation quality, is evident from all our tests
+throughout the paper. To explain this, recall that 
+since $D_i=d_i+f_i^0$,  estimating
+$D_i$ can be reduced to estimating $f_i^0$.
+Various works discuss
+the relation between $f_i^0$ and $f_i^j$ values. For
+example, the Good-Turing frequency estimation technique
+\cite{good1953population} claims that $\frac{f_i^1}{n}$
+is a consistent estimator of $f_i^0$.
+}
 		
-		As described in Section \ref{subsec:effective}, \emph{effective\_sampling\_rate} is our metric for quantifying the computational cost of our framework. To examine the trade-off between \emph{sampling\_rate} and \emph{training\_rate}, we fix \emph{effective\_sampling\_rate} to 0.02 (i.e.\, 2\% of the stream packets are processed), and vary the \emph{sampling\_rate} between 0.005 and 0.015. We then set \emph{training\_rate} such that the \emph{effective\_sampling\_rate} will be 0.02. Figure \ref{fig:caida-2016_sampling_training} shows the MAPE of this experiment with 3 batch sizes when PA is used as the online ML algorithm. 
+As described in Section \ref{subsec:effective},
+\emph{effective\_sampling\_rate} is our metric
+for quantifying the computational cost of our
+framework. To examine the trade-off between
+\emph{sampling\_rate} and \emph{training\_rate},
+we fix \emph{effective\_sampling\_rate} to 0.02
+(i.e.\, 2\% of the stream packets are processed),
+and vary the \emph{sampling\_rate} between 0.005 and
+0.015. We then set \emph{training\_rate} such that the
+\emph{effective\_sampling\_rate} will be 0.02. Figure
+\ref{fig:caida-2016_sampling_training} shows the MAPE
+of this experiment with 3 batch sizes when PA is used
+as the online ML algorithm.
+
+It is evident from Figure \ref{fig:caida-2016_sampling_training} that bigger batches yield better accuracy than smaller batches: as the batch size increases, the sample becomes more statistically representative, and the correlation between $f_i^1$ and the real batch cardinality increases. 
 		
-		It is evident from Figure \ref{fig:caida-2016_sampling_training} that bigger batches yield better accuracy than smaller batches: as the batch size increases, the sample becomes more statistically representative, and the correlation between $f_i^1$ and the real batch cardinality increases. 
-		
-		We can also see that it is better to use a high sampling rate with a low training rate rather than vice versa. This is because the cardinality of this trace only changes slightly over time. Hence, more frequent training does not improve the accuracy over time, and it is better to invest packet processing resources in sampling more packets in every batch rather than in more training batches.
+We can also see that it is better to use a high sampling rate with a low training rate rather than vice versa. This is because the cardinality of this trace only changes slightly over time. Hence, more frequent training does not improve the accuracy over time, and it is better to invest packet processing resources in sampling more packets in every batch rather than in more training batches.
 		
 		\begin{figure}[!t]
 			\centering
-			\includegraphics[width=.49\textwidth]{img/caida-2016_tradeoff.pdf}
+			\includegraphics[width=.49\textwidth]{img/caida-2016_tradeoff_new.pdf}
 			\caption{The trade-off between \emph{sampling\_rate} and \emph{training\_rate} for the CAIDA-2016 trace, with fixed \emph{effective\_sampling\_rate} of 2\%} 
 			\label{fig:caida-2016_sampling_training}
 		\end{figure}
@@ -391,10 +426,33 @@
 		Next, we examine the trade-off between \emph{sampling\_rate} and \emph{training\_rate}. We set a fixed \emph{effective\_sampling\_rate} of 0.02 (2\%), and use sampling rates of 0.005 (0.5\%), 0.01 (1\%) and 0.015 (1.5\%). The training rate is calculated such that the \emph{effective\_sampling\_rate} remains 0.02. Figure \ref{fig:caida-ddos_sampling_training} shows the MAPE for the various algorithms for three batch sizes. It is evident that increasing the sampling rate while decreasing the training rate yields better accuracy. This is in contrast to what we saw in Figure \ref{fig:caida-2016_sampling_training} for the CAIDA-2016 trace. In the CAIDA-DDoS trace, the flow size distribution changes frequently. Hence, a higher \emph{training\_rate} is required to obtain high accuracy.
 		\begin{figure}[!t]
 			\centering
-			\includegraphics[width=.49\textwidth]{img/caida-ddos_tradeoff.pdf}
+			\includegraphics[width=.49\textwidth]{img/caida-ddos_tradeoff_new.pdf}
 			\caption{The trade-off between \emph{sampling\_rate} and \emph{training\_rate} for the CAIDA-DDoS trace, with fixed \emph{effective\_sampling\_rate} of 2\%}
 			\label{fig:caida-ddos_sampling_training}
 		\end{figure}
+
+\textcolor{red}{
+So far we have implicitly assumed that the results of each training batch are ready
+before the processing of the next regular (non-training) batch. However, sometimes this assumption does not hold
+due to the processing overhead imposed by the learning phase. To study the effect of ``delayed learning"
+on the performance of the various algorithms, Figure~\ref{fig:caida-ddos_delayed_batches} shows the MAPE as a function
+of the number of batches elapsed between the learning phase and the time when the results of this phase are
+available to the algorithm. 
+The parameters used in this experiment are similar to those used for 
+Figure~\ref{fig:darpa-ddos_error}: the sampling rate is 0.01, the training rate is 0.01, and the feature set is [‘f1’].
+\begin{figure}[!t]
+\centering
+\includegraphics[width=.49\textwidth]{img/caida-ddos_delayed_batches.pdf}
+\caption{The impact of delayed batches on the performance for the CAIDA-DDoS trace}
+\label{fig:caida-ddos_delayed_batches}
+\end{figure}
+It is evident from Figure~\ref{fig:caida-ddos_delayed_batches} that
+when delayed batches is 1, we get the same MAPE values as in Figure~\ref{fig:darpa-ddos_error}. 
+It is also evident that both RLS and PA are only slightly affected by this delay, as long as it does not exceed 40. nd 
+that SGD is unstable with respect to this parameter.  
+}
+
+
 
 	\subsection{The DARPA-DDoS Trace}
 
@@ -402,7 +460,7 @@
 		
 		We use a part of the trace in which the attack occasionally goes on and off. It contains 3,955,270 packets, collected during 352 seconds. Since the number of packets is relatively small, a sampling rate of 1\% or 2\% yields a not statistically representative \emph{sample\_size}, and very high error rates. Hence, for this trace we use higher sampling rates.%
 		
-		Figure \ref{fig:darpa-ddos_statistical} shows the real vs. estimated cardinality of 3 statistical sampling-based algorithms with \emph{batch\_size} of 1 second and \emph{sampling\_rate} of $q=0.975$. Figure \ref{fig:darpa-ddos_online_ml} shows the real vs. estimated cardinality of the proposed framework with the three online ML algorithms. The framework parameters used in Figure \ref{fig:darpa-ddos_online_ml} are: $\emph{batch\_size} = 1$ second, $\emph{sampling\_rate} = 0.05$ and $\emph{training\_rate} = 0.05$. These parameters yield an \emph{effective\_sampling\_rate} of 0.975, which is the same as that used for the statistical sampling-based algorithms in Figure \ref{fig:darpa-ddos_statistical}. The feature set consists of $\{f_i^1\}$ only. As before, SGD's \emph{learning\_rate} is set to $10^{-6}$, RLS's forgetting factor is set to $\mu=0.99$, PA's $\epsilon$-insensitive loss function is set to $\epsilon=0.1$, and the PA-II update rule aggressiveness parameter is set to $C=1$.
+		Figure \ref{fig:darpa-ddos_statistical} shows the real vs. estimated cardinality of 3 statistical sampling-based algorithms with \emph{batch\_size} of 1 second and \emph{sampling\_rate} of $q=0.0975$. Figure \ref{fig:darpa-ddos_online_ml} shows the real vs. estimated cardinality of the proposed framework with the three online ML algorithms. The framework parameters used in Figure \ref{fig:darpa-ddos_online_ml} are: $\emph{batch\_size} = 1$ second, $\emph{sampling\_rate} = 0.05$ and $\emph{training\_rate} = 0.05$. These parameters yield an \emph{effective\_sampling\_rate} of 0.0975, which is the same as that used for the statistical sampling-based algorithms in Figure \ref{fig:darpa-ddos_statistical}. The feature set consists of $\{f_i^1\}$ only. As before, SGD's \emph{learning\_rate} is set to $10^{-6}$, RLS's forgetting factor is set to $\mu=0.99$, PA's $\epsilon$-insensitive loss function is set to $\epsilon=0.1$, and the PA-II update rule aggressiveness parameter is set to $C=1$.
 		
 		\begin{figure}[!tb]
 			\centering

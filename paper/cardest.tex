@@ -352,7 +352,6 @@ algorithm includes two basic operations:
 			\label{fig:caida-2016_features}
 		\end{figure}
 
-\textcolor{red}{
 The fact that $\{f_i^1\}$ is the most important feature, and that other features
 only slightly improve the estimation quality, is evident from all our tests
 throughout the paper. To explain this, recall that 
@@ -363,7 +362,6 @@ the relation between $f_i^0$ and $f_i^j$ values. For
 example, the Good-Turing frequency estimation technique
 \cite{good1953population} claims that $\frac{f_i^1}{n}$
 is a consistent estimator of $f_i^0$.
-}
 		
 As described in Section \ref{subsec:effective},
 \emph{effective\_sampling\_rate} is our metric
@@ -431,7 +429,6 @@ We can also see that it is better to use a high sampling rate with a low trainin
 			\label{fig:caida-ddos_sampling_training}
 		\end{figure}
 
-\textcolor{red}{
 So far we have implicitly assumed that the results of each training batch are ready
 before the processing of the next regular (non-training) batch. However, sometimes this assumption does not hold
 due to the processing overhead imposed by the learning phase. To study the effect of ``delayed learning"
@@ -450,7 +447,6 @@ It is evident from Figure~\ref{fig:caida-ddos_delayed_batches} that
 when delayed batches is 1, we get the same MAPE values as in Figure~\ref{fig:darpa-ddos_error}. 
 It is also evident that both RLS and PA are only slightly affected by this delay, as long as it does not exceed 40, and 
 that SGD is unstable with respect to this parameter.  
-}
 
 
 
@@ -576,7 +572,7 @@ that SGD is unstable with respect to this parameter.
 				\centering
 				\small
 				\input{tbl/time_features_labels}
-				\caption{\textcolor{red}{Average execution time in seconds for calculating entire batch cardinality and $f^i$ features from the sample}}
+				\caption{Average execution time in seconds for calculating batch cardinality and $f^i$ features from the sample}
 				\label{table:time_features_labels}
 			\end{subfigure}
 		
@@ -584,7 +580,21 @@ that SGD is unstable with respect to this parameter.
 			\label{fig:time_analysis}
 		\end{figure}
 		
-		Figure \ref{fig:time_analysis} shows the execution time of statistical sampling-based algorithms vs. online ML algorithms, over different sample sizes. These measurements are obtained from an Intel Core i7-4500U CPU, with 8GB DDR RAM. The data contains 445 batches taken from the CAIDA-2016 trace, where each batch contains 100,000 packets. For the various online ML algorithms, we used $\{f_i^1, f_i^2, f_i^3, \emph{avg\_pkt\_len}, \emph{syn\_count}\}$ as the feature set. To measure CPU consumption for different \emph{sample\_size} values, we used the following sampling rates: $q = [0.1, 0.2, 0.3, 0.4, 0.5]$. Figure \ref{table:time_estimate} shows the average execution for the sampling-based algorithms,  Figure \ref{table:time_predict} shows the average execution time for the \emph{predict()} operation using several online ML algorithms, and Figure \ref{table:time_fit} shows the average execution time for the \emph{partial\_fit()} operation. As expected, in Figure \ref{table:time_estimate} we can see the linear increase in the CPU consumption with the mean sample size, whereas in Figure \ref{table:time_predict} and \ref{table:time_fit}, CPU consumption is almost constant.
+		Figure \ref{fig:time_analysis} shows the execution time of statistical sampling-based algorithms vs. online
+		ML algorithms, over different sample sizes. These measurements are obtained from an Intel Core i7-4500U CPU,
+		with 8GB DDR RAM. The data contains 445 batches taken from the CAIDA-2016 trace, where each batch contains
+		100,000 packets. For the various online ML algorithms, we used $\{f_i^1, f_i^2, f_i^3, \emph{avg\_pkt\_len},
+		\emph{syn\_count}\}$ as the feature set. To measure CPU consumption for different \emph{sample\_size} values,
+		we used the following sampling rates: $q = [0.1, 0.2, 0.3, 0.4, 0.5]$. Figure \ref{table:time_estimate}
+		shows the average execution for the sampling-based algorithms.  Figure \ref{table:time_predict} shows
+		the average execution time for the \emph{predict()} operation using several online ML algorithms. Figure
+		\ref{table:time_fit} shows the average execution time for the \emph{partial\_fit()} operation. As expected, in
+		Figure \ref{table:time_estimate} we can see the linear increase in the CPU consumption with the mean sample
+		size, whereas in Figure \ref{table:time_predict} and \ref{table:time_fit}, CPU consumption is almost constant.
+                Finally, in Figure \ref{table:time_features_labels} we show the mean time for calculating the labels 
+                 and $f^i$ features for different sampling rates. 
+                 We can see that the time for calculating the features is proportional to the sampling rate, 
+                 while the time for calculating the labels is constant.
 
 \section{Conclusions} \label{sec:conclusions}
 	

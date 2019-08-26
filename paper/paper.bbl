@@ -129,6 +129,12 @@ D.~P. Kingma and J.~Ba.
 \newblock Adam: A method for stochastic optimization.
 \newblock {\em arXiv preprint arXiv:1412.6980}, 2014.
 
+\bibitem{Liu:2016}
+Z.~Liu, A.~Manousis, G.~Vorsanger, V.~Sekar, and V.~Braverman.
+\newblock One sketch to rule them all: Rethinking network flow monitoring with
+  univmon.
+\newblock In {\em Proceedings of the 2016 ACM SIGCOMM Conference}, SIGCOMM '16.
+
 \bibitem{mouratidis2006continuous}
 K.~Mouratidis, S.~Bakiras, and D.~Papadias.
 \newblock Continuous monitoring of top-k queries over sliding windows.

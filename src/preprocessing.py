@@ -138,7 +138,7 @@ class BatchStats:
         sampled_indices = np.random.choice(batch.batch_size, batch.sample_size, replace=False)
 
         # convert df columns that need to be hashed to np array
-        sampled_arr = trace_df[['ip.src', 'ip.dst', 'tcp.port', 'udp.port', 'ip.proto']].iloc(sampled_indices).to_numpy(str)
+        sampled_arr = trace_df[['ip.src', 'ip.dst', 'tcp.port', 'udp.port', 'ip.proto']].iloc[sampled_indices].to_numpy(str)
         sampled_arr = np.asarray(sampled_arr, order='C')
 
         # start time

@@ -7,6 +7,7 @@ from glob import glob
 from collections import Counter
 import multiprocessing
 import time
+from xxhash import xxh32_intdigest
 
 
 ##############################################################################
@@ -114,13 +115,21 @@ class BatchStats:
 
         batch = BatchStats()
 
-        process_batch_begin = time.perf_counter()
-        packets = trace_df.apply(lambda x: hash((x['ip.src'], x['ip.dst'],
-                                                 x['tcp.port'], x['udp.port'], x['ip.proto'])), axis=1)
-        batch.batch_card = len(np.unique(packets))
-        process_batch_end = time.perf_counter()
+        # convert df columns that need to be hashed to np array
+        arr = trace_df[['ip.src', 'ip.dst', 'tcp.port', 'udp.port', 'ip.proto']].to_numpy(str)
+        arr = np.asarray(arr, order='C')
 
-        # TODO: add hyperloglog calculation
+        # start time
+        process_batch_begin = time.perf_counter()
+
+        # apply 32 bit hash function
+        packets = np.apply_along_axis(xxh32_intdigest, 1, arr)
+
+        # calculate cardinality
+        batch.batch_card = len(np.unique(packets))
+
+        # end time
+        process_batch_end = time.perf_counter()
 
         # sample batch
         batch.batch_size = len(packets)
@@ -128,10 +137,14 @@ class BatchStats:
         batch.sample_size = int(sampling_rate * batch.batch_size)
         sampled_indices = np.random.choice(batch.batch_size, batch.sample_size, replace=False)
 
+        # convert df columns that need to be hashed to np array
+        sampled_arr = trace_df[['ip.src', 'ip.dst', 'tcp.port', 'udp.port', 'ip.proto']].iloc(sampled_indices).to_numpy(str)
+        sampled_arr = np.asarray(sampled_arr, order='C')
+
+        # start time
         process_sample_begin = time.perf_counter()
-        sampled_packets = trace_df.iloc[sampled_indices].apply(lambda x: hash((x['ip.src'], x['ip.dst'],
-                                                                          x['tcp.port'], x['udp.port'],
-                                                                          x['ip.proto'])), axis=1)
+
+        sampled_packets = np.apply_along_axis(xxh32_intdigest, 1, sampled_arr)
 
         # calc batch flow size histogram
         unique, counts = np.unique(sampled_packets, return_counts=True)
@@ -140,6 +153,7 @@ class BatchStats:
         # calc batch flow distrubution histogram
         unique, counts = np.unique(counts, return_counts=True)
 
+        # end time
         process_sample_end = time.perf_counter()
 
         batch.histogram = Counter(dict(zip(unique, counts)))

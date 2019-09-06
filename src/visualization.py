@@ -189,6 +189,7 @@ def time_predict(tss, estimators, estimator_names, feature_names):
     df[estimator_names] = df[estimator_names].applymap('{:,.2e}'.format)
     return df
 
+
 def time_features_labels(tss):
 
     time_d = []

@@ -6,45 +6,45 @@ Database file #1: paper.bib
 Warning--empty year in ben2016heavy
 Warning--empty year in Liu:2016
 Warning--empty year in mouratidis2006continuous
-You've used 29 entries,
+You've used 31 entries,
             2118 wiz_defined-function locations,
-            650 strings with 9136 characters,
-and the built_in function-call counts, 8780 in all, are:
-= -- 795
-> -- 545
+            662 strings with 9443 characters,
+and the built_in function-call counts, 9296 in all, are:
+= -- 843
+> -- 570
 < -- 0
-+ -- 218
-- -- 186
-* -- 572
-:= -- 1556
-add.period$ -- 95
-call.type$ -- 29
-change.case$ -- 178
++ -- 229
+- -- 194
+* -- 603
+:= -- 1646
+add.period$ -- 101
+call.type$ -- 31
+change.case$ -- 188
 chr.to.int$ -- 0
-cite$ -- 32
-duplicate$ -- 329
-empty$ -- 672
-format.name$ -- 186
-if$ -- 1793
+cite$ -- 34
+duplicate$ -- 347
+empty$ -- 716
+format.name$ -- 194
+if$ -- 1900
 int.to.chr$ -- 0
-int.to.str$ -- 29
-missing$ -- 25
-newline$ -- 148
-num.names$ -- 58
-pop$ -- 228
+int.to.str$ -- 31
+missing$ -- 26
+newline$ -- 158
+num.names$ -- 62
+pop$ -- 240
 preamble$ -- 1
-purify$ -- 149
+purify$ -- 157
 quote$ -- 0
-skip$ -- 203
+skip$ -- 217
 stack$ -- 0
-substring$ -- 198
-swap$ -- 40
+substring$ -- 215
+swap$ -- 42
 text.length$ -- 0
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 116
+type$ -- 124
 warning$ -- 3
-while$ -- 62
-width$ -- 31
-write$ -- 303
+while$ -- 67
+width$ -- 33
+write$ -- 324
 (There were 3 warnings)

@@ -38,6 +38,11 @@ R.~Cohen, L.~Katzir, and A.~Yehezkel.
 \newblock Cardinality estimation meets {Good-Turing}.
 \newblock {\em Big Data Research}, 9, 2017.
 
+\bibitem{collet2016xxhash}
+Y.~Collet.
+\newblock xxhash: Extremely fast hash algorithm.
+\newblock \url{http://cyan4973.github.io/xxHash/}, 2016.
+
 \bibitem{crammer2006online}
 K.~Crammer, O.~Dekel, J.~Keshet, S.~Shalev-Shwartz, and Y.~Singer.
 \newblock Online passive-aggressive algorithms.
@@ -163,5 +168,10 @@ T.~Tieleman and G.~Hinton.
 {University of California, Los Angeles, CS department}.
 \newblock {UCLA CSD packet traces}.
 \newblock \url{https://lasr.cs.ucla.edu/ddos/traces/}.
+
+\bibitem{van2011numpy}
+S.~Van Der~Walt, S.~C. Colbert, and G.~Varoquaux.
+\newblock The numpy array: a structure for efficient numerical computation.
+\newblock {\em Computing in Science \& Engineering}, 13(2):22, 2011.
 
 \end{thebibliography}
